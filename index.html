@@ -1,0 +1,673 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="apple-mobile-web-app-title" content="Club Caddy"/>
+<meta name="theme-color" content="#1a3a2a"/>
+<title>Club Caddy</title>
+<style>
+:root {
+  --bg:        #0f2318;
+  --surface:   #1a3a2a;
+  --surface2:  #234d39;
+  --border:    #2d6348;
+  --accent:    #4ade80;
+  --text:      #f0fdf4;
+  --muted:     #86efac;
+  --error:     #f87171;
+  --locked:    #fbbf24;
+  --danger:    #ef4444;
+  --tab-h:     64px;
+  --safe-b:    env(safe-area-inset-bottom, 0px);
+  --r-sm: 6px; --r-md: 10px; --r-lg: 16px; --r-xl: 24px;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,sans-serif;-webkit-font-smoothing:antialiased;overscroll-behavior:none}
+input,button{font:inherit}
+
+/* ── App shell ── */
+#app{display:flex;flex-direction:column;height:100%;max-width:480px;margin:0 auto}
+#content{flex:1;overflow-y:auto;padding-bottom:calc(var(--tab-h) + var(--safe-b))}
+
+/* ── Tab bar ── */
+#tab-bar{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;height:calc(var(--tab-h) + var(--safe-b));padding-bottom:var(--safe-b);display:flex;background:var(--surface);border-top:1px solid var(--border);z-index:100}
+.tab-btn{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;border:none;background:none;color:var(--muted);cursor:pointer;padding:8px 4px;transition:color .15s;min-height:44px}
+.tab-btn.active{color:#f59e0b}
+.tab-btn svg{width:22px;height:22px}
+.tab-label{font-size:.65rem;font-weight:600;letter-spacing:.04em;text-transform:uppercase}
+
+/* ── Screen ── */
+.screen{display:none;flex-direction:column;min-height:100%}
+.screen.active{display:flex}
+.screen-header{display:flex;align-items:center;justify-content:space-between;padding:20px 16px 12px;border-bottom:1px solid var(--border)}
+.screen-title{font-size:1.2rem;font-weight:700;letter-spacing:-.02em}
+.screen-hint{text-align:center;color:var(--muted);font-size:.8rem;padding:12px 16px}
+.btn-ghost{background:none;color:var(--muted);border:none;border-radius:var(--r-sm);padding:8px 12px;font-size:1.1rem;cursor:pointer;min-height:44px;min-width:44px}
+
+/* ── Conditions bar ── */
+#conditions-bar{padding:14px 16px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;flex-direction:column;gap:14px}
+.temp-header{display:flex;justify-content:space-between;align-items:baseline}
+.bar-label{font-size:.8rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;white-space:nowrap}
+#temp-value{font-size:1.1rem;font-weight:700;color:var(--accent);font-variant-numeric:tabular-nums}
+.slider-wrap{display:flex;flex-direction:column;gap:4px}
+#temp-slider{-webkit-appearance:none;appearance:none;width:100%;height:6px;border-radius:3px;outline:none;cursor:pointer;background:linear-gradient(to right,var(--accent) 0%,var(--accent) var(--fp,57%),var(--border) var(--fp,57%),var(--border) 100%)}
+#temp-slider::-webkit-slider-thumb{-webkit-appearance:none;width:22px;height:22px;border-radius:50%;background:var(--accent);border:3px solid var(--bg);box-shadow:0 0 0 2px var(--accent);cursor:pointer}
+#temp-slider::-moz-range-thumb{width:22px;height:22px;border-radius:50%;background:var(--accent);border:3px solid var(--bg);cursor:pointer}
+.slider-ends{display:flex;justify-content:space-between;font-size:.7rem;color:var(--accent)}
+.elevation-row{display:flex;align-items:center;gap:12px}
+.seg-ctrl{display:flex;flex:1;background:var(--bg);border-radius:var(--r-md);padding:3px;gap:2px}
+.seg-btn{flex:1;border:none;background:none;color:var(--muted);padding:6px 4px;border-radius:calc(var(--r-md) - 3px);font-size:.78rem;font-weight:600;cursor:pointer;transition:background .15s,color .15s;min-height:36px}
+.seg-btn.active{background:var(--surface2);color:var(--accent)}
+
+/* ── Carry table ── */
+.carry-table-wrap{flex:1}
+table.carry-table{width:100%;border-collapse:collapse;font-size:.95rem}
+table.carry-table thead th{padding:10px 12px;text-align:left;font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);border-bottom:1px solid var(--border);background:var(--surface)}
+table.carry-table thead th.col-base,table.carry-table thead th.col-adj{text-align:right}
+table.carry-table tbody tr{border-bottom:1px solid rgba(45,99,72,.4);cursor:pointer;transition:background .1s}
+table.carry-table tbody tr:hover,table.carry-table tbody tr:active{background:var(--surface2)}
+table.carry-table tbody tr.locked .col-club{color:var(--locked)}
+table.carry-table td{padding:12px}
+.col-club{font-weight:600}
+.col-base{color:var(--muted);font-size:.85rem;text-align:right;font-variant-numeric:tabular-nums}
+.col-adj{font-weight:700;font-size:1.05rem;color:var(--accent);text-align:right;font-variant-numeric:tabular-nums}
+
+/* ── Wedge ── */
+.wedge-wrap{padding:16px;flex:1}
+.conditions-chips{display:flex;gap:8px;padding:10px 16px}
+.chip{background:var(--surface2);color:var(--muted);border-radius:20px;padding:4px 12px;font-size:.8rem;font-weight:600}
+table.wedge-table{width:100%;border-collapse:collapse;font-size:.95rem}
+table.wedge-table thead th{padding:10px 8px;text-align:right;font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);border-bottom:1px solid var(--border)}
+table.wedge-table thead th:first-child{text-align:left}
+table.wedge-table tbody tr{border-bottom:1px solid rgba(45,99,72,.4)}
+table.wedge-table td{padding:14px 8px}
+.wt-name{font-weight:700;font-size:1rem}
+.wt-carry{text-align:right;font-weight:700;font-size:1.2rem;color:var(--accent);font-variant-numeric:tabular-nums}
+
+/* ── Bump & Run ── */
+.bumprun-wrap{flex:1}
+table.bumprun-table{width:100%;border-collapse:collapse;font-size:.95rem}
+table.bumprun-table thead th{padding:10px 16px;text-align:left;font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);border-bottom:1px solid var(--border);background:var(--surface)}
+table.bumprun-table thead th:last-child{text-align:right}
+table.bumprun-table tbody tr{border-bottom:1px solid rgba(45,99,72,.4)}
+table.bumprun-table td{padding:14px 16px}
+.brt-club{font-weight:600}
+.brt-ratio{text-align:right;font-weight:700;font-size:1.1rem;color:var(--accent);font-variant-numeric:tabular-nums}
+
+/* ── Modal ── */
+#modal-scrim{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);align-items:flex-end;z-index:200}
+#modal-scrim.open{display:flex;animation:fade-in .15s ease}
+.modal-sheet{width:100%;max-width:480px;margin:0 auto;background:var(--surface);border-radius:var(--r-xl) var(--r-xl) 0 0;border-top:1px solid var(--border);padding:0 0 calc(24px + var(--safe-b));animation:slide-up .2s ease}
+.modal-header{display:flex;align-items:center;justify-content:space-between;padding:16px 16px 12px;border-bottom:1px solid var(--border)}
+.modal-title{font-size:1rem;font-weight:700}
+.modal-close{background:none;border:none;color:var(--muted);font-size:1rem;cursor:pointer;padding:6px 8px;min-width:36px;min-height:36px}
+.modal-body{padding:16px;display:flex;flex-direction:column;gap:16px}
+.modal-hint{font-size:.85rem;color:var(--muted)}
+.stepper-row{display:flex;align-items:center;justify-content:center;gap:10px}
+.stepper-btn{width:44px;height:44px;border-radius:50%;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-size:1.2rem;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.modal-num-input{width:100px;text-align:right;font-size:2rem;font-weight:700;background:var(--bg);border:2px solid var(--border);border-radius:var(--r-md);color:var(--text);padding:8px 10px;font-variant-numeric:tabular-nums;outline:none}
+.modal-num-input:focus{border-color:var(--accent)}
+.modal-unit{font-size:1rem;color:var(--muted);font-weight:600}
+.modal-actions{display:flex;gap:10px}
+.modal-actions>*{flex:1}
+.btn-primary{background:var(--accent);color:#0f2318;border:none;border-radius:var(--r-md);padding:12px 16px;font-weight:700;font-size:1rem;cursor:pointer;min-height:44px}
+.btn-primary:disabled{opacity:.35;cursor:not-allowed}
+.btn-secondary{background:var(--surface2);color:var(--text);border:1px solid var(--border);border-radius:var(--r-md);padding:12px 16px;font-weight:600;font-size:.9rem;cursor:pointer;min-height:44px}
+.btn-danger{background:var(--danger);color:#fff;border:none;border-radius:var(--r-md);padding:12px 16px;font-weight:700;font-size:.9rem;cursor:pointer;min-height:44px}
+
+/* ── Setup screen ── */
+#setup-screen{display:none;min-height:100vh;background:var(--bg);flex-direction:column;align-items:center;overflow-y:auto;padding:0 16px env(safe-area-inset-bottom,0)}
+#setup-screen.active{display:flex}
+.setup-inner{width:100%;max-width:480px;padding:40px 0;display:flex;flex-direction:column;gap:28px}
+.setup-header{text-align:center}
+.setup-logo{font-size:3rem;margin-bottom:12px}
+.setup-title{font-size:2rem;font-weight:800;letter-spacing:-.03em;margin-bottom:8px}
+.setup-subtitle{font-size:.95rem;color:var(--muted);line-height:1.5}
+.setup-form{background:var(--surface);border-radius:var(--r-lg);padding:20px;display:flex;flex-direction:column;gap:20px;border:1px solid var(--border)}
+.anchor-group{display:flex;flex-direction:column;gap:6px}
+.anchor-label{font-size:.8rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+.anchor-row{display:flex;align-items:center;gap:8px}
+.anchor-input{flex:1;background:var(--bg);border:2px solid var(--border);border-radius:var(--r-md);color:var(--text);font-size:1.8rem;font-weight:700;padding:10px 14px;text-align:right;font-variant-numeric:tabular-nums;outline:none;max-width:140px}
+.anchor-input:focus{border-color:var(--accent)}
+.anchor-input.error{border-color:var(--error)}
+.anchor-unit{font-size:1rem;color:var(--muted);font-weight:600}
+.anchor-error{color:var(--error);font-size:.78rem;min-height:1.2em}
+.setup-cta{width:100%;padding:16px}
+.bag-preview{background:var(--surface);border-radius:var(--r-lg);padding:16px;border:1px solid var(--border)}
+.preview-title{font-size:.8rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:12px}
+table.preview-table{width:100%;border-collapse:collapse;font-size:.9rem}
+table.preview-table th{text-align:left;font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);padding:4px 6px;border-bottom:1px solid var(--border)}
+table.preview-table td{padding:6px}
+table.preview-table .num{text-align:right;font-variant-numeric:tabular-nums;color:var(--accent)}
+table.preview-table tr.dim td{color:var(--muted)}
+
+@keyframes fade-in{from{opacity:0}to{opacity:1}}
+@keyframes slide-up{from{transform:translateY(100%)}to{transform:translateY(0)}}
+input[type=number]::-webkit-inner-spin-button,input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none}
+input[type=number]{-moz-appearance:textfield}
+</style>
+</head>
+<body>
+
+<!-- Setup screen -->
+<div id="setup-screen">
+  <div class="setup-inner">
+    <div class="setup-header">
+      <div class="setup-logo">⛳</div>
+      <h1 class="setup-title">Club Caddy</h1>
+      <p class="setup-subtitle">Enter your two anchor clubs and we'll build your full bag.</p>
+    </div>
+    <div class="setup-form">
+      <div class="anchor-group">
+        <label class="anchor-label">Driver carry</label>
+        <div class="anchor-row">
+          <input class="anchor-input" id="input-driver" type="number" inputmode="numeric" placeholder="215" min="1" max="999"/>
+          <span class="anchor-unit">yds</span>
+        </div>
+        <p class="anchor-error" id="err-driver"></p>
+      </div>
+      <div class="anchor-group">
+        <label class="anchor-label">5 Iron carry</label>
+        <div class="anchor-row">
+          <input class="anchor-input" id="input-5i" type="number" inputmode="numeric" placeholder="160" min="1" max="999"/>
+          <span class="anchor-unit">yds</span>
+        </div>
+        <p class="anchor-error" id="err-5i"></p>
+      </div>
+    </div>
+    <div class="bag-preview">
+      <p class="preview-title">Your Bag Preview</p>
+      <table class="preview-table">
+        <thead><tr><th>Club</th><th class="num">Carry</th></tr></thead>
+        <tbody id="preview-body"></tbody>
+      </table>
+    </div>
+    <button class="btn-primary setup-cta" id="btn-start" disabled>Start Playing</button>
+  </div>
+</div>
+
+<!-- Main app -->
+<div id="app" style="display:none">
+  <div id="content">
+
+    <!-- Screen 1: Carry Calculator -->
+    <div class="screen active" id="screen-calculator">
+      <div class="screen-header">
+        <h2 class="screen-title">Carry Calculator</h2>
+        <button class="btn-ghost" id="btn-settings" title="Reset bag">⚙</button>
+      </div>
+      <div id="conditions-bar">
+        <div>
+          <div class="temp-header">
+            <span class="bar-label">Temp</span>
+            <span id="temp-value">20°C</span>
+          </div>
+          <div class="slider-wrap">
+            <input id="temp-slider" type="range" min="0" max="35" step="1" value="20"/>
+            <div class="slider-ends"><span>0°</span><span>35°</span></div>
+          </div>
+        </div>
+        <div class="elevation-row">
+          <span class="bar-label">Lie</span>
+          <div class="seg-ctrl" id="elevation-ctrl">
+            <button class="seg-btn" data-val="uphill">▲ Up</button>
+            <button class="seg-btn active" data-val="flat">— Flat</button>
+            <button class="seg-btn" data-val="downhill">▼ Down</button>
+          </div>
+        </div>
+      </div>
+      <div class="carry-table-wrap">
+        <table class="carry-table">
+          <thead><tr>
+            <th class="col-club">Club</th>
+            <th class="col-base">Base</th>
+            <th class="col-adj">Adjusted</th>
+          </tr></thead>
+          <tbody id="carry-body"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Screen 2: Wedge Matrix -->
+    <div class="screen" id="screen-wedge">
+      <div class="screen-header">
+        <h2 class="screen-title">Wedge Matrix</h2>
+      </div>
+      <div class="conditions-chips">
+        <span class="chip" id="wedge-temp-chip">20°C</span>
+        <span class="chip" id="wedge-elev-chip">Flat</span>
+      </div>
+      <div class="wedge-wrap">
+        <table class="wedge-table">
+          <thead><tr>
+            <th>Club</th>
+            <th>Full</th>
+            <th>¾</th>
+            <th>½</th>
+          </tr></thead>
+          <tbody id="wedge-body"></tbody>
+        </table>
+      </div>
+      <p class="screen-hint">Adjust conditions on the Carry tab.</p>
+    </div>
+
+    <!-- Screen 3: Bump & Run -->
+    <div class="screen" id="screen-bumprun">
+      <div class="screen-header">
+        <h2 class="screen-title">Bump &amp; Run</h2>
+      </div>
+      <p class="screen-hint">Carry : Roll ratio for each club.</p>
+      <div class="bumprun-wrap">
+        <table class="bumprun-table">
+          <thead><tr>
+            <th>Club</th>
+            <th>Carry : Roll</th>
+          </tr></thead>
+          <tbody id="bumprun-body"></tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Tab bar -->
+  <nav id="tab-bar">
+    <button class="tab-btn active" data-tab="calculator">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M8 7h8M8 12h4M8 17h2"/></svg>
+      <span class="tab-label">Carry</span>
+    </button>
+    <button class="tab-btn" data-tab="wedge">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20L12 4l8 16H4z"/></svg>
+      <span class="tab-label">Wedge</span>
+    </button>
+    <button class="tab-btn" data-tab="bumprun">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r="1" fill="currentColor"/></svg>
+      <span class="tab-label">Bump &amp; Run</span>
+    </button>
+  </nav>
+</div>
+
+<!-- Modal -->
+<div id="modal-scrim">
+  <div class="modal-sheet">
+    <div class="modal-header">
+      <span class="modal-title" id="modal-title"></span>
+      <button class="modal-close" id="modal-close">✕</button>
+    </div>
+    <div class="modal-body">
+      <p class="modal-hint" id="modal-hint"></p>
+      <div class="stepper-row" id="modal-stepper-row">
+        <button class="stepper-btn" id="btn-minus">−</button>
+        <input class="modal-num-input" id="modal-input" type="number" inputmode="numeric" min="1" max="999"/>
+        <span class="modal-unit">yds</span>
+        <button class="stepper-btn" id="btn-plus">+</button>
+      </div>
+      <div class="modal-actions" id="modal-actions"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── Constants ────────────────────────────────────────────────────────
+const CLUBS = [
+  { id:'driver', label:'Driver' },
+  { id:'5w',     label:'5 Wood' },
+  { id:'4h',     label:'4 Hybrid' },
+  { id:'5i',     label:'5 Iron' },
+  { id:'6i',     label:'6 Iron' },
+  { id:'7i',     label:'7 Iron' },
+  { id:'8i',     label:'8 Iron' },
+  { id:'9i',     label:'9 Iron' },
+  { id:'pw',     label:'PW' },
+  { id:'aw',     label:'AW' },
+  { id:'sw',     label:'SW' },
+];
+
+const SPEC = { driver:215,'5w':198,'4h':183,'5i':160,'6i':145,'7i':135,'8i':125,'9i':110,pw:100,aw:88,sw:72 };
+
+const WEDGE_CLUBS = ['pw','aw','sw'];
+const SWING_LABELS = ['Full','¾','½'];
+const SWING_MULT   = [1.00, 0.83, 0.65];
+
+const BUMP_RUN = [
+  { id:'pw',  label:'PW',       ratio:'1:1'  },
+  { id:'9i',  label:'9 Iron',   ratio:'1:2'  },
+  { id:'8i',  label:'8 Iron',   ratio:'1:3'  },
+  { id:'7i',  label:'7 Iron',   ratio:'1:4'  },
+  { id:'6i',  label:'6 Iron',   ratio:'1:5'  },
+  { id:'5i',  label:'5 Iron',   ratio:'1:6'  },
+  { id:'4h',  label:'4 Hybrid', ratio:'1:8'  },
+  { id:'5w',  label:'5 Wood',   ratio:'1:10' },
+];
+
+const ELEV_MOD = { uphill:0.95, flat:1.0, downhill:1.05 };
+const ELEV_LABEL = { uphill:'Uphill', flat:'Flat', downhill:'Downhill' };
+
+// ── State ────────────────────────────────────────────────────────────
+const state = {
+  isSetupComplete: false,
+  anchors: null,        // { driver, fiveIron }
+  carries: {},          // { clubId: number }
+  locked: {},           // { clubId: true }
+  temp: 20,
+  elevation: 'flat',
+};
+
+function loadState() {
+  try {
+    const raw = localStorage.getItem('club-caddy-v1');
+    if (!raw) return;
+    const saved = JSON.parse(raw);
+    Object.assign(state, saved);
+  } catch(e) {}
+}
+
+function saveState() {
+  const { isSetupComplete, anchors, carries, locked, temp, elevation } = state;
+  localStorage.setItem('club-caddy-v1', JSON.stringify({ isSetupComplete, anchors, carries, locked, temp, elevation }));
+}
+
+// ── Math ─────────────────────────────────────────────────────────────
+function tempMod(t) { return 1 + (t - 20) * 0.002; }
+
+function adjustedCarry(base, t, elev) {
+  return Math.round(base * tempMod(t) * ELEV_MOD[elev]);
+}
+
+function extrapolate(driverCarry, fiveIronCarry) {
+  const specGap = SPEC.driver - SPEC['5i'];           // 55
+  const userGap = driverCarry - fiveIronCarry;
+  const aboveScale = userGap / specGap;
+  const belowScale = fiveIronCarry / SPEC['5i'];
+  const result = {};
+  CLUBS.forEach(({ id }, i) => {
+    if (state.locked[id]) { result[id] = state.carries[id]; return; }
+    if (i === 0) { result[id] = driverCarry; return; }
+    if (i === 3) { result[id] = fiveIronCarry; return; }
+    if (i < 3) {
+      result[id] = driverCarry - Math.round((SPEC.driver - SPEC[id]) * aboveScale);
+    } else {
+      result[id] = fiveIronCarry - Math.round((SPEC['5i'] - SPEC[id]) * belowScale);
+    }
+  });
+  return result;
+}
+
+// ── Setup screen ─────────────────────────────────────────────────────
+const inputDriver = document.getElementById('input-driver');
+const input5i     = document.getElementById('input-5i');
+const errDriver   = document.getElementById('err-driver');
+const err5i       = document.getElementById('err-5i');
+const btnStart    = document.getElementById('btn-start');
+const previewBody = document.getElementById('preview-body');
+
+function validateSetup() {
+  const d = parseInt(inputDriver.value, 10);
+  const f = parseInt(input5i.value, 10);
+  const dOk = !isNaN(d) && d > 0;
+  const fOk = !isNaN(f) && f > 0;
+  const crossOk = dOk && fOk && d > f;
+
+  inputDriver.classList.toggle('error', inputDriver.value && !dOk);
+  input5i.classList.toggle('error', input5i.value && (!fOk || (dOk && fOk && d <= f)));
+  errDriver.textContent = inputDriver.value && !dOk ? 'Enter a valid yardage' : '';
+  err5i.textContent = input5i.value && !fOk ? 'Enter a valid yardage'
+    : (fOk && dOk && d <= f) ? 'Must be less than Driver' : '';
+
+  btnStart.disabled = !crossOk;
+
+  if (dOk && fOk) {
+    const preview = extrapolate(d, f);
+    previewBody.innerHTML = CLUBS.map(({ id, label }) =>
+      `<tr class="${crossOk ? '' : 'dim'}"><td>${label}</td><td class="num">${crossOk ? preview[id] + ' yds' : '—'}</td></tr>`
+    ).join('');
+  } else {
+    previewBody.innerHTML = CLUBS.map(({ id, label }) =>
+      `<tr class="dim"><td>${label}</td><td class="num">—</td></tr>`
+    ).join('');
+  }
+}
+
+function initSetupListeners() {
+  inputDriver.addEventListener('input', validateSetup);
+  input5i.addEventListener('input', validateSetup);
+  validateSetup();
+
+  btnStart.addEventListener('click', () => {
+    const d = parseInt(inputDriver.value, 10);
+    const f = parseInt(input5i.value, 10);
+    state.anchors = { driver: d, fiveIron: f };
+    state.carries = extrapolate(d, f);
+    state.isSetupComplete = true;
+    saveState();
+    showApp();
+  });
+}
+
+// ── Render ───────────────────────────────────────────────────────────
+function renderCarryTable() {
+  const tbody = document.getElementById('carry-body');
+  tbody.innerHTML = CLUBS.map(({ id, label }) => {
+    const base = state.carries[id] ?? SPEC[id];
+    const adj  = adjustedCarry(base, state.temp, state.elevation);
+    const locked = state.locked[id] ? 'locked' : '';
+    return `<tr class="${locked}" data-id="${id}">
+      <td class="col-club">${label}</td>
+      <td class="col-base">${base}</td>
+      <td class="col-adj">${adj}</td>
+    </tr>`;
+  }).join('');
+  tbody.querySelectorAll('tr').forEach(row => {
+    row.addEventListener('click', () => openClubModal(row.dataset.id));
+  });
+}
+
+function renderWedge() {
+  const tbody = document.getElementById('wedge-body');
+  tbody.innerHTML = WEDGE_CLUBS.map(id => {
+    const base = state.carries[id] ?? SPEC[id];
+    const cells = SWING_MULT.map(m =>
+      `<td class="wt-carry">${Math.round(base * m * tempMod(state.temp) * ELEV_MOD[state.elevation])}</td>`
+    ).join('');
+    return `<tr><td class="wt-name">${CLUBS.find(c=>c.id===id).label}</td>${cells}</tr>`;
+  }).join('');
+  document.getElementById('wedge-temp-chip').textContent = `${state.temp}°C`;
+  document.getElementById('wedge-elev-chip').textContent = ELEV_LABEL[state.elevation];
+}
+
+function renderBumpRun() {
+  document.getElementById('bumprun-body').innerHTML = BUMP_RUN.map(({ label, ratio }) =>
+    `<tr><td class="brt-club">${label}</td><td class="brt-ratio">${ratio}</td></tr>`
+  ).join('');
+}
+
+function renderAll() {
+  renderCarryTable();
+  renderWedge();
+  renderBumpRun();
+}
+
+// ── Conditions ───────────────────────────────────────────────────────
+const tempSlider = document.getElementById('temp-slider');
+const tempValue  = document.getElementById('temp-value');
+
+tempSlider.addEventListener('input', () => {
+  state.temp = parseInt(tempSlider.value, 10);
+  tempValue.textContent = `${state.temp}°C`;
+  tempSlider.style.setProperty('--fp', `${(state.temp / 35) * 100}%`);
+  renderAll();
+  saveState();
+});
+
+document.getElementById('elevation-ctrl').addEventListener('click', e => {
+  const btn = e.target.closest('.seg-btn');
+  if (!btn) return;
+  document.querySelectorAll('#elevation-ctrl .seg-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  state.elevation = btn.dataset.val;
+  renderAll();
+  saveState();
+});
+
+// ── Tabs ─────────────────────────────────────────────────────────────
+document.getElementById('tab-bar').addEventListener('click', e => {
+  const btn = e.target.closest('.tab-btn');
+  if (!btn) return;
+  const tab = btn.dataset.tab;
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(`screen-${tab}`).classList.add('active');
+});
+
+// ── Club modal ───────────────────────────────────────────────────────
+const modalScrim  = document.getElementById('modal-scrim');
+const modalTitle  = document.getElementById('modal-title');
+const modalHint   = document.getElementById('modal-hint');
+const modalInput  = document.getElementById('modal-input');
+const modalActions = document.getElementById('modal-actions');
+let modalClubId   = null;
+
+function openClubModal(id) {
+  modalClubId = id;
+  const club = CLUBS.find(c => c.id === id);
+  const base = state.carries[id] ?? SPEC[id];
+  modalTitle.textContent = club.label;
+  modalHint.textContent  = `Set base carry for ${club.label}`;
+  modalInput.value = base;
+  modalActions.innerHTML = `
+    <button class="btn-secondary" id="modal-reset">Reset to bag</button>
+    <button class="btn-primary" id="modal-save">Save</button>`;
+  document.getElementById('modal-reset').addEventListener('click', () => {
+    delete state.locked[modalClubId];
+    state.carries = extrapolate(state.anchors.driver, state.anchors.fiveIron);
+    saveState(); renderAll(); closeModal();
+  });
+  document.getElementById('modal-save').addEventListener('click', () => {
+    const v = parseInt(modalInput.value, 10);
+    if (!isNaN(v) && v > 0) {
+      state.carries[modalClubId] = v;
+      state.locked[modalClubId] = true;
+      saveState(); renderAll(); closeModal();
+    }
+  });
+  modalScrim.classList.add('open');
+}
+
+function closeModal() { modalScrim.classList.remove('open'); modalClubId = null; }
+
+document.getElementById('modal-close').addEventListener('click', closeModal);
+modalScrim.addEventListener('click', e => { if (e.target === modalScrim) closeModal(); });
+document.getElementById('btn-minus').addEventListener('click', () => {
+  const v = parseInt(modalInput.value, 10);
+  if (!isNaN(v) && v > 1) modalInput.value = v - 1;
+});
+document.getElementById('btn-plus').addEventListener('click', () => {
+  const v = parseInt(modalInput.value, 10);
+  if (!isNaN(v)) modalInput.value = v + 1;
+});
+
+// ── Reset bag (settings button) ──────────────────────────────────────
+document.getElementById('btn-settings').addEventListener('click', () => {
+  modalClubId = null;
+  modalTitle.textContent = 'Reset Bag?';
+  modalHint.textContent  = `Your anchors: Driver ${state.anchors?.driver} / 5i ${state.anchors?.fiveIron}. This will clear all custom carries.`;
+  document.getElementById('modal-stepper-row').style.display = 'none';
+  modalActions.innerHTML = `
+    <button class="btn-secondary" id="modal-cancel">Cancel</button>
+    <button class="btn-danger" id="modal-confirm-reset">Reset</button>`;
+  document.getElementById('modal-cancel').addEventListener('click', () => {
+    document.getElementById('modal-stepper-row').style.display = '';
+    closeModal();
+  });
+  document.getElementById('modal-confirm-reset').addEventListener('click', () => {
+    state.isSetupComplete = false;
+    state.anchors = null;
+    state.carries = {};
+    state.locked  = {};
+    document.getElementById('modal-stepper-row').style.display = '';
+    saveState(); closeModal(); showSetup();
+  });
+  modalScrim.classList.add('open');
+});
+
+// ── Show/hide screens ────────────────────────────────────────────────
+function showApp() {
+  document.getElementById('setup-screen').classList.remove('active');
+  document.getElementById('app').style.display = '';
+  // sync UI to state
+  tempSlider.value = state.temp;
+  tempValue.textContent = `${state.temp}°C`;
+  tempSlider.style.setProperty('--fp', `${(state.temp / 35) * 100}%`);
+  document.querySelectorAll('#elevation-ctrl .seg-btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.val === state.elevation);
+  });
+  renderAll();
+}
+
+function showSetup() {
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('setup-screen').classList.add('active');
+  inputDriver.value = '';
+  input5i.value = '';
+  validateSetup();
+}
+
+// ── Boot ─────────────────────────────────────────────────────────────
+loadState();
+initSetupListeners();
+if (state.isSetupComplete) {
+  showApp();
+} else {
+  showSetup();
+}
+
+// ── Service worker (PWA) ─────────────────────────────────────────────
+if ('serviceWorker' in navigator) {
+  const swCode = `
+    const CACHE = 'club-caddy-v1';
+    self.addEventListener('install', e => {
+      e.waitUntil(caches.open(CACHE).then(c => c.add('/')));
+      self.skipWaiting();
+    });
+    self.addEventListener('activate', e => {
+      e.waitUntil(caches.keys().then(keys =>
+        Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k)))
+      ));
+      self.clients.claim();
+    });
+    self.addEventListener('fetch', e => {
+      e.respondWith(caches.match(e.request).then(r => r || fetch(e.request)));
+    });
+  `;
+  const blob = new Blob([swCode], { type: 'application/javascript' });
+  const swUrl = URL.createObjectURL(blob);
+  navigator.serviceWorker.register(swUrl).catch(() => {});
+}
+</script>
+
+<!-- PWA manifest inline -->
+<script>
+const manifest = {
+  name: 'Club Caddy',
+  short_name: 'Club Caddy',
+  description: 'Golf carry distance calculator',
+  start_url: '.',
+  display: 'standalone',
+  orientation: 'portrait',
+  background_color: '#0f2318',
+  theme_color: '#1a3a2a',
+  icons: []
+};
+const blob = new Blob([JSON.stringify(manifest)], {type:'application/manifest+json'});
+const link = document.createElement('link');
+link.rel = 'manifest';
+link.href = URL.createObjectURL(blob);
+document.head.appendChild(link);
+</script>
+
+</body>
+</html>
