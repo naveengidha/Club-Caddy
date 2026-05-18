@@ -20,8 +20,9 @@
   --error:     #f87171;
   --locked:    #fbbf24;
   --danger:    #ef4444;
-  --tab-h:     64px;
+  --safe-t:    env(safe-area-inset-top, 0px);
   --safe-b:    env(safe-area-inset-bottom, 0px);
+  --tab-h:     50px;
   --r-sm: 6px; --r-md: 10px; --r-lg: 16px; --r-xl: 24px;
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -30,72 +31,77 @@ input,button{font:inherit}
 
 /* ── App shell ── */
 #app{display:flex;flex-direction:column;height:100%;max-width:480px;margin:0 auto}
-#content{flex:1;overflow-y:auto;padding-bottom:calc(var(--tab-h) + var(--safe-b))}
+#content{flex:1;overflow-y:auto;padding-bottom:calc(var(--tab-h) + var(--safe-b));display:flex;flex-direction:column}
 
 /* ── Tab bar ── */
-#tab-bar{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;height:calc(var(--tab-h) + var(--safe-b));padding-bottom:var(--safe-b);display:flex;background:var(--surface);border-top:1px solid var(--border);z-index:100}
-.tab-btn{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;border:none;background:none;color:var(--muted);cursor:pointer;padding:8px 4px;transition:color .15s;min-height:44px}
+#tab-bar{
+  position:fixed;bottom:0;left:50%;transform:translateX(-50%);
+  width:100%;max-width:480px;
+  height:calc(var(--tab-h) + var(--safe-b));
+  padding-bottom:var(--safe-b);
+  display:flex;background:var(--surface);border-top:1px solid var(--border);z-index:100
+}
+.tab-btn{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;border:none;background:none;color:var(--muted);cursor:pointer;padding:5px 4px;transition:color .15s;min-height:44px}
 .tab-btn.active{color:#f59e0b}
-.tab-btn svg{width:22px;height:22px}
-.tab-label{font-size:.65rem;font-weight:600;letter-spacing:.04em;text-transform:uppercase}
+.tab-btn svg{width:18px;height:18px}
+.tab-label{font-size:.58rem;font-weight:600;letter-spacing:.04em;text-transform:uppercase}
 
 /* ── Screen ── */
-.screen{display:none;flex-direction:column;min-height:100%}
+.screen{display:none;flex-direction:column;flex:1}
 .screen.active{display:flex}
-.screen-header{display:flex;align-items:center;justify-content:space-between;padding:20px 16px 12px;border-bottom:1px solid var(--border)}
-.screen-title{font-size:1.2rem;font-weight:700;letter-spacing:-.02em}
-.screen-hint{text-align:center;color:var(--muted);font-size:.8rem;padding:12px 16px}
-.btn-ghost{background:none;color:var(--muted);border:none;border-radius:var(--r-sm);padding:8px 12px;font-size:1.1rem;cursor:pointer;min-height:44px;min-width:44px}
+.screen-header{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 16px;
+  height:44px;
+  flex-shrink:0;
+  border-bottom:1px solid var(--border)
+}
+.btn-ghost{background:none;color:var(--muted);border:none;border-radius:var(--r-sm);padding:8px 12px;font-size:1.1rem;cursor:pointer;height:44px;width:44px}
 
 /* ── Conditions bar ── */
-#conditions-bar{padding:14px 16px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;flex-direction:column;gap:14px}
-.temp-header{display:flex;justify-content:space-between;align-items:baseline}
-.bar-label{font-size:.8rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;white-space:nowrap}
-#temp-value{font-size:1.1rem;font-weight:700;color:var(--accent);font-variant-numeric:tabular-nums}
-.slider-wrap{display:flex;flex-direction:column;gap:4px}
-#temp-slider{-webkit-appearance:none;appearance:none;width:100%;height:6px;border-radius:3px;outline:none;cursor:pointer;background:linear-gradient(to right,var(--accent) 0%,var(--accent) var(--fp,57%),var(--border) var(--fp,57%),var(--border) 100%)}
-#temp-slider::-webkit-slider-thumb{-webkit-appearance:none;width:22px;height:22px;border-radius:50%;background:var(--accent);border:3px solid var(--bg);box-shadow:0 0 0 2px var(--accent);cursor:pointer}
-#temp-slider::-moz-range-thumb{width:22px;height:22px;border-radius:50%;background:var(--accent);border:3px solid var(--bg);cursor:pointer}
-.slider-ends{display:flex;justify-content:space-between;font-size:.7rem;color:var(--accent)}
-.elevation-row{display:flex;align-items:center;gap:12px}
-.seg-ctrl{display:flex;flex:1;background:var(--bg);border-radius:var(--r-md);padding:3px;gap:2px}
-.seg-btn{flex:1;border:none;background:none;color:var(--muted);padding:6px 4px;border-radius:calc(var(--r-md) - 3px);font-size:.78rem;font-weight:600;cursor:pointer;transition:background .15s,color .15s;min-height:36px}
+#conditions-bar{padding:8px 16px;padding-top:calc(8px + var(--safe-t));background:var(--surface);border-bottom:1px solid var(--border);display:flex;flex-direction:column;gap:7px}
+.cond-row{display:flex;align-items:center;gap:10px}
+.bar-label{font-size:.7rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;white-space:nowrap;min-width:32px}
+.seg-ctrl{display:flex;flex:1;background:var(--bg);border-radius:var(--r-md);padding:2px;gap:2px}
+.seg-btn{flex:1;border:none;background:none;color:var(--muted);padding:4px 2px;border-radius:calc(var(--r-md) - 2px);font-size:.7rem;font-weight:600;cursor:pointer;transition:background .15s,color .15s;min-height:28px}
 .seg-btn.active{background:var(--surface2);color:var(--accent)}
 
+.screen-title{font-size:1.05rem;font-weight:700;letter-spacing:-.02em}
+
 /* ── Carry table ── */
-.carry-table-wrap{flex:1}
-table.carry-table{width:100%;border-collapse:collapse;font-size:.95rem}
-table.carry-table thead th{padding:10px 12px;text-align:left;font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);border-bottom:1px solid var(--border);background:var(--surface)}
+.carry-table-wrap{flex:1;display:flex;flex-direction:column}
+table.carry-table{width:100%;border-collapse:collapse;font-size:.95rem;flex:1}
+table.carry-table thead th{padding:6px 12px;text-align:left;font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);border-bottom:1px solid var(--border);background:var(--surface)}
 table.carry-table thead th.col-base,table.carry-table thead th.col-adj{text-align:right}
-table.carry-table tbody tr{border-bottom:1px solid rgba(45,99,72,.4);cursor:pointer;transition:background .1s}
+table.carry-table tbody{display:table-row-group;height:100%}
+table.carry-table tbody tr{border-bottom:1px solid rgba(45,99,72,.4);cursor:pointer;transition:background .1s;height:calc((100% - 1px) / 11)}
 table.carry-table tbody tr:hover,table.carry-table tbody tr:active{background:var(--surface2)}
 table.carry-table tbody tr.locked .col-club{color:var(--locked)}
-table.carry-table td{padding:12px}
-.col-club{font-weight:600}
-.col-base{color:var(--muted);font-size:.85rem;text-align:right;font-variant-numeric:tabular-nums}
-.col-adj{font-weight:700;font-size:1.05rem;color:var(--accent);text-align:right;font-variant-numeric:tabular-nums}
+table.carry-table td{padding:0 12px}
+.col-club{font-weight:600;font-size:.9rem}
+.col-base{color:var(--muted);font-size:.82rem;text-align:right;font-variant-numeric:tabular-nums}
+.col-adj{font-weight:700;font-size:.95rem;color:var(--accent);text-align:right;font-variant-numeric:tabular-nums}
 
 /* ── Wedge ── */
-.wedge-wrap{padding:16px;flex:1}
-.conditions-chips{display:flex;gap:8px;padding:10px 16px}
-.chip{background:var(--surface2);color:var(--muted);border-radius:20px;padding:4px 12px;font-size:.8rem;font-weight:600}
-table.wedge-table{width:100%;border-collapse:collapse;font-size:.95rem}
-table.wedge-table thead th{padding:10px 8px;text-align:right;font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);border-bottom:1px solid var(--border)}
+.wedge-wrap{padding:0;flex:1;display:flex;flex-direction:column}
+table.wedge-table{width:100%;border-collapse:collapse;font-size:.95rem;flex:1}
+table.wedge-table thead th{padding:6px 12px;text-align:right;font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);border-bottom:1px solid var(--border);background:var(--surface)}
 table.wedge-table thead th:first-child{text-align:left}
 table.wedge-table tbody tr{border-bottom:1px solid rgba(45,99,72,.4)}
-table.wedge-table td{padding:14px 8px}
+table.wedge-table td{padding:14px 12px}
 .wt-name{font-weight:700;font-size:1rem}
 .wt-carry{text-align:right;font-weight:700;font-size:1.2rem;color:var(--accent);font-variant-numeric:tabular-nums}
 
 /* ── Bump & Run ── */
-.bumprun-wrap{flex:1}
-table.bumprun-table{width:100%;border-collapse:collapse;font-size:.95rem}
-table.bumprun-table thead th{padding:10px 16px;text-align:left;font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);border-bottom:1px solid var(--border);background:var(--surface)}
+.bumprun-wrap{flex:1;display:flex;flex-direction:column}
+table.bumprun-table{width:100%;border-collapse:collapse;font-size:.95rem;flex:1}
+table.bumprun-table thead th{padding:6px 16px;text-align:left;font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);border-bottom:1px solid var(--border);background:var(--surface)}
 table.bumprun-table thead th:last-child{text-align:right}
-table.bumprun-table tbody tr{border-bottom:1px solid rgba(45,99,72,.4)}
-table.bumprun-table td{padding:14px 16px}
-.brt-club{font-weight:600}
-.brt-ratio{text-align:right;font-weight:700;font-size:1.1rem;color:var(--accent);font-variant-numeric:tabular-nums}
+table.bumprun-table tbody{display:table-row-group;height:100%}
+table.bumprun-table tbody tr{border-bottom:1px solid rgba(45,99,72,.4);height:calc((100% - 1px) / 8)}
+table.bumprun-table td{padding:0 16px}
+.brt-club{font-weight:600;font-size:.9rem}
+.brt-ratio{text-align:right;font-weight:700;font-size:.95rem;color:var(--accent);font-variant-numeric:tabular-nums}
 
 /* ── Modal ── */
 #modal-scrim{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);align-items:flex-end;z-index:200}
@@ -119,7 +125,7 @@ table.bumprun-table td{padding:14px 16px}
 .btn-danger{background:var(--danger);color:#fff;border:none;border-radius:var(--r-md);padding:12px 16px;font-weight:700;font-size:.9rem;cursor:pointer;min-height:44px}
 
 /* ── Setup screen ── */
-#setup-screen{display:none;min-height:100vh;background:var(--bg);flex-direction:column;align-items:center;overflow-y:auto;padding:0 16px env(safe-area-inset-bottom,0)}
+#setup-screen{display:none;min-height:100vh;background:var(--bg);flex-direction:column;align-items:center;overflow-y:auto;padding:var(--safe-t) 16px var(--safe-b)}
 #setup-screen.active{display:flex}
 .setup-inner{width:100%;max-width:480px;padding:40px 0;display:flex;flex-direction:column;gap:28px}
 .setup-header{text-align:center}
@@ -193,31 +199,57 @@ input[type=number]{-moz-appearance:textfield}
 <div id="app" style="display:none">
   <div id="content">
 
+    <!-- Global conditions bar — visible on all tabs -->
+    <div id="conditions-bar">
+      <div class="cond-row">
+        <span class="bar-label">Air</span>
+        <div class="seg-ctrl" id="air-ctrl">
+          <button class="seg-btn" data-val="cold">❄ Cold</button>
+          <button class="seg-btn active" data-val="normal">Normal</button>
+          <button class="seg-btn" data-val="warm">☀ Warm</button>
+        </div>
+      </div>
+      <div class="cond-row">
+        <span class="bar-label">Wind</span>
+        <div class="seg-ctrl" id="wind-ctrl">
+          <button class="seg-btn" data-val="headwind">▼▼ Into</button>
+          <button class="seg-btn" data-val="slight-head">▼ Into</button>
+          <button class="seg-btn active" data-val="calm">Calm</button>
+          <button class="seg-btn" data-val="slight-tail">▲ Down</button>
+          <button class="seg-btn" data-val="tailwind">▲▲ Down</button>
+        </div>
+      </div>
+      <div class="cond-row">
+        <span class="bar-label">Elev</span>
+        <div class="seg-ctrl" id="elev-ctrl">
+          <button class="seg-btn" data-val="above">Above</button>
+          <button class="seg-btn active" data-val="level">Level</button>
+          <button class="seg-btn" data-val="below">Below</button>
+        </div>
+      </div>
+      <div class="cond-row">
+        <span class="bar-label">Green</span>
+        <div class="seg-ctrl" id="firmness-ctrl">
+          <button class="seg-btn" data-val="soft">Soft</button>
+          <button class="seg-btn active" data-val="normal">Normal</button>
+          <button class="seg-btn" data-val="firm">Firm</button>
+        </div>
+      </div>
+      <div class="cond-row">
+        <span class="bar-label">Lie</span>
+        <div class="seg-ctrl" id="lie-ctrl">
+          <button class="seg-btn active" data-val="clean">Clean</button>
+          <button class="seg-btn" data-val="rough">Rough</button>
+          <button class="seg-btn" data-val="hardpan">Hardpan</button>
+        </div>
+      </div>
+    </div>
+
     <!-- Screen 1: Carry Calculator -->
     <div class="screen active" id="screen-calculator">
       <div class="screen-header">
         <h2 class="screen-title">Carry Calculator</h2>
         <button class="btn-ghost" id="btn-settings" title="Reset bag">⚙</button>
-      </div>
-      <div id="conditions-bar">
-        <div>
-          <div class="temp-header">
-            <span class="bar-label">Temp</span>
-            <span id="temp-value">20°C</span>
-          </div>
-          <div class="slider-wrap">
-            <input id="temp-slider" type="range" min="0" max="35" step="1" value="20"/>
-            <div class="slider-ends"><span>0°</span><span>35°</span></div>
-          </div>
-        </div>
-        <div class="elevation-row">
-          <span class="bar-label">Lie</span>
-          <div class="seg-ctrl" id="elevation-ctrl">
-            <button class="seg-btn" data-val="uphill">▲ Up</button>
-            <button class="seg-btn active" data-val="flat">— Flat</button>
-            <button class="seg-btn" data-val="downhill">▼ Down</button>
-          </div>
-        </div>
       </div>
       <div class="carry-table-wrap">
         <table class="carry-table">
@@ -236,10 +268,6 @@ input[type=number]{-moz-appearance:textfield}
       <div class="screen-header">
         <h2 class="screen-title">Wedge Matrix</h2>
       </div>
-      <div class="conditions-chips">
-        <span class="chip" id="wedge-temp-chip">20°C</span>
-        <span class="chip" id="wedge-elev-chip">Flat</span>
-      </div>
       <div class="wedge-wrap">
         <table class="wedge-table">
           <thead><tr>
@@ -251,20 +279,19 @@ input[type=number]{-moz-appearance:textfield}
           <tbody id="wedge-body"></tbody>
         </table>
       </div>
-      <p class="screen-hint">Adjust conditions on the Carry tab.</p>
     </div>
 
     <!-- Screen 3: Bump & Run -->
     <div class="screen" id="screen-bumprun">
       <div class="screen-header">
         <h2 class="screen-title">Bump &amp; Run</h2>
+        <span style="font-size:.72rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.05em">Carry : Roll</span>
       </div>
-      <p class="screen-hint">Carry : Roll ratio for each club.</p>
       <div class="bumprun-wrap">
         <table class="bumprun-table">
           <thead><tr>
             <th>Club</th>
-            <th>Carry : Roll</th>
+            <th>Ratio</th>
           </tr></thead>
           <tbody id="bumprun-body"></tbody>
         </table>
@@ -329,8 +356,7 @@ const CLUBS = [
 const SPEC = { driver:215,'5w':198,'4h':183,'5i':160,'6i':145,'7i':135,'8i':125,'9i':110,pw:100,aw:88,sw:72 };
 
 const WEDGE_CLUBS = ['pw','aw','sw'];
-const SWING_LABELS = ['Full','¾','½'];
-const SWING_MULT   = [1.00, 0.83, 0.65];
+const SWING_MULT  = [1.00, 0.83, 0.65];
 
 const BUMP_RUN = [
   { id:'pw',  label:'PW',       ratio:'1:1'  },
@@ -343,43 +369,58 @@ const BUMP_RUN = [
   { id:'5w',  label:'5 Wood',   ratio:'1:10' },
 ];
 
-const ELEV_MOD = { uphill:0.95, flat:1.0, downhill:1.05 };
-const ELEV_LABEL = { uphill:'Uphill', flat:'Flat', downhill:'Downhill' };
+// Air modifier: cold air is denser, ball flies shorter; warm air is less dense, flies further
+const AIR_MOD   = { cold: 0.98, normal: 1.0, warm: 1.02 };
+
+// Wind modifier: headwind reduces carry, tailwind increases it
+const WIND_MOD   = { headwind: 0.90, 'slight-head': 0.95, calm: 1.0, 'slight-tail': 1.05, tailwind: 1.10 };
+
+// Target elevation: hitting to a green above/below you changes effective carry needed
+const ELEV_MOD  = { above: 1.05, level: 1.0, below: 0.95 };
+
+// Green firmness: firm greens release more so flight it shorter; soft greens need full carry
+const FIRM_MOD  = { soft: 1.0, normal: 1.0, firm: 0.97 };
+
+// Lie: clean contact flies full distance; rough kills spin/speed; hardpan can add distance
+const LIE_MOD   = { clean: 1.0, rough: 0.95, hardpan: 1.02 };
 
 // ── State ────────────────────────────────────────────────────────────
 const state = {
   isSetupComplete: false,
-  anchors: null,        // { driver, fiveIron }
-  carries: {},          // { clubId: number }
-  locked: {},           // { clubId: true }
-  temp: 20,
-  elevation: 'flat',
+  anchors: null,
+  carries: {},
+  locked: {},
+  air: 'normal',
+  wind: 'calm',
+  elev: 'level',
+  firmness: 'normal',
+  lie: 'clean',
 };
 
 function loadState() {
   try {
-    const raw = localStorage.getItem('club-caddy-v1');
-    if (!raw) return;
-    const saved = JSON.parse(raw);
-    Object.assign(state, saved);
+    const saved = JSON.parse(localStorage.getItem('club-caddy-v3') || 'null');
+    if (saved) Object.assign(state, saved);
   } catch(e) {}
 }
 
 function saveState() {
-  const { isSetupComplete, anchors, carries, locked, temp, elevation } = state;
-  localStorage.setItem('club-caddy-v1', JSON.stringify({ isSetupComplete, anchors, carries, locked, temp, elevation }));
+  const { isSetupComplete, anchors, carries, locked, air, wind, elev, firmness, lie } = state;
+  localStorage.setItem('club-caddy-v3', JSON.stringify({ isSetupComplete, anchors, carries, locked, air, wind, elev, firmness, lie }));
 }
 
 // ── Math ─────────────────────────────────────────────────────────────
-function tempMod(t) { return 1 + (t - 20) * 0.002; }
+function condMod() {
+  return AIR_MOD[state.air] * WIND_MOD[state.wind] * ELEV_MOD[state.elev] * FIRM_MOD[state.firmness] * LIE_MOD[state.lie];
+}
 
-function adjustedCarry(base, t, elev) {
-  return Math.round(base * tempMod(t) * ELEV_MOD[elev]);
+function adjustedCarry(base) {
+  return Math.round(base * condMod());
 }
 
 function extrapolate(driverCarry, fiveIronCarry) {
-  const specGap = SPEC.driver - SPEC['5i'];           // 55
-  const userGap = driverCarry - fiveIronCarry;
+  const specGap    = SPEC.driver - SPEC['5i'];
+  const userGap    = driverCarry - fiveIronCarry;
   const aboveScale = userGap / specGap;
   const belowScale = fiveIronCarry / SPEC['5i'];
   const result = {};
@@ -396,7 +437,7 @@ function extrapolate(driverCarry, fiveIronCarry) {
   return result;
 }
 
-// ── Setup screen ─────────────────────────────────────────────────────
+// ── Setup ─────────────────────────────────────────────────────────────
 const inputDriver = document.getElementById('input-driver');
 const input5i     = document.getElementById('input-5i');
 const errDriver   = document.getElementById('err-driver');
@@ -416,26 +457,18 @@ function validateSetup() {
   errDriver.textContent = inputDriver.value && !dOk ? 'Enter a valid yardage' : '';
   err5i.textContent = input5i.value && !fOk ? 'Enter a valid yardage'
     : (fOk && dOk && d <= f) ? 'Must be less than Driver' : '';
-
   btnStart.disabled = !crossOk;
 
-  if (dOk && fOk) {
-    const preview = extrapolate(d, f);
-    previewBody.innerHTML = CLUBS.map(({ id, label }) =>
-      `<tr class="${crossOk ? '' : 'dim'}"><td>${label}</td><td class="num">${crossOk ? preview[id] + ' yds' : '—'}</td></tr>`
-    ).join('');
-  } else {
-    previewBody.innerHTML = CLUBS.map(({ id, label }) =>
-      `<tr class="dim"><td>${label}</td><td class="num">—</td></tr>`
-    ).join('');
-  }
+  const preview = (dOk && fOk) ? extrapolate(d, f) : null;
+  previewBody.innerHTML = CLUBS.map(({ id, label }) =>
+    `<tr class="${crossOk ? '' : 'dim'}"><td>${label}</td><td class="num">${crossOk ? preview[id] + ' yds' : '—'}</td></tr>`
+  ).join('');
 }
 
 function initSetupListeners() {
   inputDriver.addEventListener('input', validateSetup);
   input5i.addEventListener('input', validateSetup);
   validateSetup();
-
   btnStart.addEventListener('click', () => {
     const d = parseInt(inputDriver.value, 10);
     const f = parseInt(input5i.value, 10);
@@ -447,35 +480,29 @@ function initSetupListeners() {
   });
 }
 
-// ── Render ───────────────────────────────────────────────────────────
+// ── Render ────────────────────────────────────────────────────────────
 function renderCarryTable() {
   const tbody = document.getElementById('carry-body');
   tbody.innerHTML = CLUBS.map(({ id, label }) => {
     const base = state.carries[id] ?? SPEC[id];
-    const adj  = adjustedCarry(base, state.temp, state.elevation);
-    const locked = state.locked[id] ? 'locked' : '';
-    return `<tr class="${locked}" data-id="${id}">
+    return `<tr class="${state.locked[id] ? 'locked' : ''}" data-id="${id}">
       <td class="col-club">${label}</td>
       <td class="col-base">${base}</td>
-      <td class="col-adj">${adj}</td>
+      <td class="col-adj">${adjustedCarry(base)}</td>
     </tr>`;
   }).join('');
-  tbody.querySelectorAll('tr').forEach(row => {
-    row.addEventListener('click', () => openClubModal(row.dataset.id));
-  });
+  tbody.querySelectorAll('tr').forEach(row =>
+    row.addEventListener('click', () => openClubModal(row.dataset.id))
+  );
 }
 
 function renderWedge() {
-  const tbody = document.getElementById('wedge-body');
-  tbody.innerHTML = WEDGE_CLUBS.map(id => {
+  const m = condMod();
+  document.getElementById('wedge-body').innerHTML = WEDGE_CLUBS.map(id => {
     const base = state.carries[id] ?? SPEC[id];
-    const cells = SWING_MULT.map(m =>
-      `<td class="wt-carry">${Math.round(base * m * tempMod(state.temp) * ELEV_MOD[state.elevation])}</td>`
-    ).join('');
+    const cells = SWING_MULT.map(s => `<td class="wt-carry">${Math.round(base * s * m)}</td>`).join('');
     return `<tr><td class="wt-name">${CLUBS.find(c=>c.id===id).label}</td>${cells}</tr>`;
   }).join('');
-  document.getElementById('wedge-temp-chip').textContent = `${state.temp}°C`;
-  document.getElementById('wedge-elev-chip').textContent = ELEV_LABEL[state.elevation];
 }
 
 function renderBumpRun() {
@@ -484,60 +511,51 @@ function renderBumpRun() {
   ).join('');
 }
 
-function renderAll() {
-  renderCarryTable();
-  renderWedge();
-  renderBumpRun();
+function renderAll() { renderCarryTable(); renderWedge(); renderBumpRun(); }
+
+// ── Conditions ────────────────────────────────────────────────────────
+function initCondCtrl(ctrlId, stateKey) {
+  document.getElementById(ctrlId).addEventListener('click', e => {
+    const btn = e.target.closest('.seg-btn');
+    if (!btn) return;
+    document.querySelectorAll(`#${ctrlId} .seg-btn`).forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    state[stateKey] = btn.dataset.val;
+    renderAll();
+    saveState();
+  });
 }
+initCondCtrl('air-ctrl',      'air');
+initCondCtrl('wind-ctrl',     'wind');
+initCondCtrl('elev-ctrl',     'elev');
+initCondCtrl('firmness-ctrl', 'firmness');
+initCondCtrl('lie-ctrl',      'lie');
 
-// ── Conditions ───────────────────────────────────────────────────────
-const tempSlider = document.getElementById('temp-slider');
-const tempValue  = document.getElementById('temp-value');
-
-tempSlider.addEventListener('input', () => {
-  state.temp = parseInt(tempSlider.value, 10);
-  tempValue.textContent = `${state.temp}°C`;
-  tempSlider.style.setProperty('--fp', `${(state.temp / 35) * 100}%`);
-  renderAll();
-  saveState();
-});
-
-document.getElementById('elevation-ctrl').addEventListener('click', e => {
-  const btn = e.target.closest('.seg-btn');
-  if (!btn) return;
-  document.querySelectorAll('#elevation-ctrl .seg-btn').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-  state.elevation = btn.dataset.val;
-  renderAll();
-  saveState();
-});
-
-// ── Tabs ─────────────────────────────────────────────────────────────
+// ── Tabs ──────────────────────────────────────────────────────────────
 document.getElementById('tab-bar').addEventListener('click', e => {
   const btn = e.target.closest('.tab-btn');
   if (!btn) return;
-  const tab = btn.dataset.tab;
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-  document.getElementById(`screen-${tab}`).classList.add('active');
+  document.getElementById(`screen-${btn.dataset.tab}`).classList.add('active');
 });
 
-// ── Club modal ───────────────────────────────────────────────────────
-const modalScrim  = document.getElementById('modal-scrim');
-const modalTitle  = document.getElementById('modal-title');
-const modalHint   = document.getElementById('modal-hint');
-const modalInput  = document.getElementById('modal-input');
+// ── Club modal ────────────────────────────────────────────────────────
+const modalScrim   = document.getElementById('modal-scrim');
+const modalTitle   = document.getElementById('modal-title');
+const modalHint    = document.getElementById('modal-hint');
+const modalInput   = document.getElementById('modal-input');
 const modalActions = document.getElementById('modal-actions');
-let modalClubId   = null;
+let modalClubId    = null;
 
 function openClubModal(id) {
   modalClubId = id;
   const club = CLUBS.find(c => c.id === id);
-  const base = state.carries[id] ?? SPEC[id];
   modalTitle.textContent = club.label;
   modalHint.textContent  = `Set base carry for ${club.label}`;
-  modalInput.value = base;
+  modalInput.value = state.carries[id] ?? SPEC[id];
+  document.getElementById('modal-stepper-row').style.display = '';
   modalActions.innerHTML = `
     <button class="btn-secondary" id="modal-reset">Reset to bag</button>
     <button class="btn-primary" id="modal-save">Save</button>`;
@@ -570,11 +588,10 @@ document.getElementById('btn-plus').addEventListener('click', () => {
   if (!isNaN(v)) modalInput.value = v + 1;
 });
 
-// ── Reset bag (settings button) ──────────────────────────────────────
+// ── Reset bag ─────────────────────────────────────────────────────────
 document.getElementById('btn-settings').addEventListener('click', () => {
-  modalClubId = null;
   modalTitle.textContent = 'Reset Bag?';
-  modalHint.textContent  = `Your anchors: Driver ${state.anchors?.driver} / 5i ${state.anchors?.fiveIron}. This will clear all custom carries.`;
+  modalHint.textContent  = `Anchors: Driver ${state.anchors?.driver} / 5i ${state.anchors?.fiveIron}. This will clear all custom carries.`;
   document.getElementById('modal-stepper-row').style.display = 'none';
   modalActions.innerHTML = `
     <button class="btn-secondary" id="modal-cancel">Cancel</button>
@@ -584,27 +601,31 @@ document.getElementById('btn-settings').addEventListener('click', () => {
     closeModal();
   });
   document.getElementById('modal-confirm-reset').addEventListener('click', () => {
-    state.isSetupComplete = false;
-    state.anchors = null;
-    state.carries = {};
-    state.locked  = {};
+    Object.assign(state, { isSetupComplete:false, anchors:null, carries:{}, locked:{} });
     document.getElementById('modal-stepper-row').style.display = '';
     saveState(); closeModal(); showSetup();
   });
   modalScrim.classList.add('open');
 });
 
-// ── Show/hide screens ────────────────────────────────────────────────
+// ── Show/hide ─────────────────────────────────────────────────────────
+function syncCondUI() {
+  document.querySelectorAll('#air-ctrl .seg-btn').forEach(b =>
+    b.classList.toggle('active', b.dataset.val === state.air));
+  document.querySelectorAll('#wind-ctrl .seg-btn').forEach(b =>
+    b.classList.toggle('active', b.dataset.val === state.wind));
+  document.querySelectorAll('#elev-ctrl .seg-btn').forEach(b =>
+    b.classList.toggle('active', b.dataset.val === state.elev));
+  document.querySelectorAll('#firmness-ctrl .seg-btn').forEach(b =>
+    b.classList.toggle('active', b.dataset.val === state.firmness));
+  document.querySelectorAll('#lie-ctrl .seg-btn').forEach(b =>
+    b.classList.toggle('active', b.dataset.val === state.lie));
+}
+
 function showApp() {
   document.getElementById('setup-screen').classList.remove('active');
   document.getElementById('app').style.display = '';
-  // sync UI to state
-  tempSlider.value = state.temp;
-  tempValue.textContent = `${state.temp}°C`;
-  tempSlider.style.setProperty('--fp', `${(state.temp / 35) * 100}%`);
-  document.querySelectorAll('#elevation-ctrl .seg-btn').forEach(b => {
-    b.classList.toggle('active', b.dataset.val === state.elevation);
-  });
+  syncCondUI();
   renderAll();
 }
 
@@ -616,58 +637,22 @@ function showSetup() {
   validateSetup();
 }
 
-// ── Boot ─────────────────────────────────────────────────────────────
+// ── Boot ──────────────────────────────────────────────────────────────
 loadState();
 initSetupListeners();
-if (state.isSetupComplete) {
-  showApp();
-} else {
-  showSetup();
-}
+state.isSetupComplete ? showApp() : showSetup();
 
-// ── Service worker (PWA) ─────────────────────────────────────────────
+// ── Service worker (PWA) ──────────────────────────────────────────────
 if ('serviceWorker' in navigator) {
-  const swCode = `
-    const CACHE = 'club-caddy-v1';
-    self.addEventListener('install', e => {
-      e.waitUntil(caches.open(CACHE).then(c => c.add('/')));
-      self.skipWaiting();
-    });
-    self.addEventListener('activate', e => {
-      e.waitUntil(caches.keys().then(keys =>
-        Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k)))
-      ));
-      self.clients.claim();
-    });
-    self.addEventListener('fetch', e => {
-      e.respondWith(caches.match(e.request).then(r => r || fetch(e.request)));
-    });
-  `;
-  const blob = new Blob([swCode], { type: 'application/javascript' });
-  const swUrl = URL.createObjectURL(blob);
-  navigator.serviceWorker.register(swUrl).catch(() => {});
+  const sw = `const C='club-caddy-v3';self.addEventListener('install',e=>{e.waitUntil(caches.open(C).then(c=>c.add('/')));self.skipWaiting()});self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(k=>Promise.all(k.filter(n=>n!==C).map(n=>caches.delete(n)))));self.clients.claim()});self.addEventListener('fetch',e=>{e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request)))})`;
+  const url = URL.createObjectURL(new Blob([sw], {type:'application/javascript'}));
+  navigator.serviceWorker.register(url).catch(()=>{});
 }
+const mf = {name:'Club Caddy',short_name:'Club Caddy',start_url:'.',display:'standalone',orientation:'portrait',background_color:'#0f2318',theme_color:'#1a3a2a',icons:[]};
+const ml = document.createElement('link');
+ml.rel = 'manifest';
+ml.href = URL.createObjectURL(new Blob([JSON.stringify(mf)],{type:'application/manifest+json'}));
+document.head.appendChild(ml);
 </script>
-
-<!-- PWA manifest inline -->
-<script>
-const manifest = {
-  name: 'Club Caddy',
-  short_name: 'Club Caddy',
-  description: 'Golf carry distance calculator',
-  start_url: '.',
-  display: 'standalone',
-  orientation: 'portrait',
-  background_color: '#0f2318',
-  theme_color: '#1a3a2a',
-  icons: []
-};
-const blob = new Blob([JSON.stringify(manifest)], {type:'application/manifest+json'});
-const link = document.createElement('link');
-link.rel = 'manifest';
-link.href = URL.createObjectURL(blob);
-document.head.appendChild(link);
-</script>
-
 </body>
 </html>
