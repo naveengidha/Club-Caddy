@@ -88,10 +88,14 @@ table.carry-table td{padding:0 12px}
 table.wedge-table{width:100%;border-collapse:collapse;font-size:.95rem;flex:1}
 table.wedge-table thead th{padding:6px 12px;text-align:right;font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);border-bottom:1px solid var(--border);background:var(--surface)}
 table.wedge-table thead th:first-child{text-align:left}
-table.wedge-table tbody tr{border-bottom:1px solid rgba(45,99,72,.4)}
+table.wedge-table tbody tr.wt-carry-row{border-bottom:none}
+table.wedge-table tbody tr.wt-roll-row{border-bottom:1px solid rgba(45,99,72,.4)}
 table.wedge-table td{padding:14px 12px}
+table.wedge-table tr.wt-roll-row td{padding-top:0;padding-bottom:8px}
 .wt-name{font-weight:700;font-size:1rem}
-.wt-carry{text-align:right;font-weight:700;font-size:1.2rem;color:var(--accent);font-variant-numeric:tabular-nums}
+.wt-carry{text-align:right;font-weight:700;font-size:1.2rem;color:var(--accent);font-variant-numeric:tabular-nums;width:54px;min-width:54px}
+.wt-roll{text-align:right;font-size:.75rem;font-weight:600;color:var(--muted);font-variant-numeric:tabular-nums}
+.wt-roll-label{font-size:.7rem;font-weight:500;color:var(--muted);opacity:.6}
 
 /* ── Bump & Run ── */
 .target-input-row{display:flex;align-items:center;justify-content:center;gap:16px;padding:10px 16px;border-bottom:1px solid var(--border);background:var(--surface)}
@@ -101,7 +105,7 @@ table.wedge-table td{padding:14px 12px}
 .target-wrap{flex:1;display:flex;flex-direction:column;overflow:hidden}
 table.target-table{width:100%;border-collapse:collapse;font-size:.95rem;flex:1}
 table.target-table thead th{padding:5px 16px;text-align:left;font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);border-bottom:1px solid var(--border);background:var(--surface)}
-table.target-table thead th:last-child{text-align:right}
+table.target-table thead th:nth-child(3),table.target-table thead th:last-child{text-align:right}
 table.target-table tbody{display:table-row-group;height:100%}
 table.target-table tbody tr{border-bottom:1px solid rgba(45,99,72,.4);height:calc((100% - 1px) / 11)}
 table.target-table tbody tr.target-pick{background:rgba(184,148,64,.13)}
@@ -111,7 +115,8 @@ table.target-table td{padding:0 16px}
 .tt-badge.full{background:rgba(184,148,64,.3);color:#c9a84c;border:1px solid rgba(184,148,64,.45)}
 .tt-badge.flight{background:rgba(45,140,80,.25);color:#4caf72;border:1px solid rgba(45,140,80,.4)}
 .tt-badge.bomb{background:rgba(224,108,108,.2);color:#e06c6c;border:1px solid rgba(224,108,108,.45)}
-.tt-adj{font-weight:700;font-variant-numeric:tabular-nums}
+.tt-adj{font-weight:700;font-variant-numeric:tabular-nums;text-align:left}
+.tt-roll{text-align:right;font-variant-numeric:tabular-nums;font-size:.82rem;color:var(--muted)}
 .tt-diff{text-align:right;font-variant-numeric:tabular-nums;font-size:.85rem}
 .tt-diff.over{color:#e06c6c}
 .tt-diff.under{color:var(--muted)}
@@ -184,7 +189,7 @@ input[type=number]{-moz-appearance:textfield}
       <div class="anchor-group">
         <label class="anchor-label">Driver carry</label>
         <div class="anchor-row">
-          <input class="anchor-input" id="input-driver" type="number" inputmode="numeric" value="215" min="1" max="999"/>
+          <input class="anchor-input" id="input-driver" type="number" inputmode="numeric" value="210" min="1" max="999"/>
           <span class="anchor-unit">yds</span>
         </div>
         <p class="anchor-error" id="err-driver"></p>
@@ -303,6 +308,7 @@ input[type=number]{-moz-appearance:textfield}
           <thead><tr>
             <th>Club</th>
             <th>Adjusted</th>
+            <th>Roll</th>
             <th>Diff</th>
           </tr></thead>
           <tbody id="target-body"></tbody>
@@ -378,7 +384,7 @@ const AIR_MOD   = { cold: 0.98, normal: 1.0, warm: 1.02 };
 const WIND_MOD   = { headwind: 0.90, 'slight-head': 0.95, calm: 1.0, 'slight-tail': 1.05, tailwind: 1.10 };
 
 // Target elevation: hitting to a green above/below you changes effective carry needed
-const ELEV_MOD  = { above: 1.05, level: 1.0, below: 0.95 };
+const ELEV_MOD  = { above: 0.95, level: 1.0, below: 1.05 };
 
 // Lie: clean contact flies full distance; rough kills spin/speed; hardpan can add distance
 const LIE_MOD   = { clean: 1.0, rough: 0.95, hardpan: 1.02 };
@@ -496,11 +502,25 @@ function renderCarryTable() {
 }
 
 function renderWedge() {
-  const m = condMod();
+  const windDev = WIND_MOD[state.wind] - 1.0;
+  const flatMod = AIR_MOD[state.air] * ELEV_MOD[state.elev] * LIE_MOD[state.lie];
+
   document.getElementById('wedge-body').innerHTML = WEDGE_CLUBS.map(id => {
-    const base = state.carries[id] ?? SPEC[id];
-    const cells = SWING_MULT.map(s => `<td class="wt-carry">${Math.round(base * s * m)}</td>`).join('');
-    return `<tr><td class="wt-name">${CLUBS.find(c=>c.id===id).label}</td>${cells}</tr>`;
+    const base  = state.carries[id] ?? SPEC[id];
+    const label = CLUBS.find(c => c.id === id).label;
+
+    const carries = SWING_MULT.map(s => {
+      const windMod = 1.0 + windDev * s;
+      return Math.round(base * s * flatMod * windMod);
+    });
+
+    const carryCells = carries.map(c => `<td class="wt-carry">${c}</td>`).join('');
+    const rollCells  = carries.map(c => `<td class="wt-roll">+${Math.round(c * 0.08)}</td>`).join('');
+
+    return (
+      `<tr class="wt-carry-row"><td class="wt-name">${label}</td>${carryCells}</tr>` +
+      `<tr class="wt-roll-row"><td class="wt-roll-label">roll</td>${rollCells}</tr>`
+    );
   }).join('');
 }
 
@@ -509,15 +529,17 @@ function renderTarget() {
   const input = document.getElementById('target-display');
   if (input && document.activeElement !== input) input.value = t;
   const rows = CLUBS.map(({ id, label }) => {
-    const base = state.carries[id] ?? SPEC[id];
-    const adj = adjustedCarry(base);
-    const diff = adj - t;
-    const sign = diff > 0 ? '+' : '';
-    const cls = diff > 0 ? 'over' : 'under';
-    return { label, adj, diff, sign, cls, absDiff: Math.abs(diff) };
+    const base  = state.carries[id] ?? SPEC[id];
+    const adj   = adjustedCarry(base);
+    const roll  = Math.round(adj * 0.08);
+    const total = adj + roll;
+    const diff  = total - t;
+    const sign  = diff > 0 ? '+' : '';
+    const cls   = diff > 0 ? 'over' : 'under';
+    return { label, adj, roll, total, diff, sign, cls, absDiff: Math.abs(diff) };
   });
 
-  // "Full" = closest club at or above target (smallest positive diff, or least negative if all under)
+  // "Full" = closest club whose total is at or above target
   const overRows  = rows.filter(r => r.diff >= 0);
   const fullRow   = overRows.length
     ? overRows.reduce((a, b) => a.diff <= b.diff ? a : b)
@@ -527,7 +549,7 @@ function renderTarget() {
   const fullIdx   = rows.indexOf(fullRow);
   const flightRow = rows.slice(0, fullIdx).reverse().find(r => r.diff > fullRow.diff) ?? null;
 
-  // "Bomb" = closest club just below target (largest diff that's still negative, excluding fullRow if it's under)
+  // "Bomb" = closest club just below target
   const underRows = rows.filter(r => r.diff < 0);
   const bombRow   = underRows.length
     ? underRows.reduce((a, b) => a.diff >= b.diff ? a : b)
@@ -545,6 +567,7 @@ function renderTarget() {
     return `<tr class="${trCls}">
       <td class="tt-club">${r.label}${badge}</td>
       <td class="tt-adj">${r.adj} yds</td>
+      <td class="tt-roll">+${r.roll}</td>
       <td class="tt-diff ${r.cls}">${r.sign}${r.diff}</td>
     </tr>`;
   }).join('');
@@ -697,7 +720,7 @@ function showApp() {
 function showSetup() {
   document.getElementById('app').style.display = 'none';
   document.getElementById('setup-screen').classList.add('active');
-  inputDriver.value = '215';
+  inputDriver.value = '210';
   input5i.value = '160';
   validateSetup();
 }
