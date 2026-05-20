@@ -1,0 +1,10 @@
+{
+  "name": "Club Caddy",
+  "short_name": "Club Caddy",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0f2318",
+  "theme_color": "#1a3a2a",
+  "icons": []
+}

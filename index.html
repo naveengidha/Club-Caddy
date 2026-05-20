@@ -8,6 +8,7 @@
 <meta name="apple-mobile-web-app-title" content="Club Caddy"/>
 <meta name="theme-color" content="#1a3a2a"/>
 <title>Club Caddy</title>
+<link rel="manifest" href="/manifest.json"/>
 <style>
 :root {
   --bg:        #0f2318;
@@ -108,7 +109,8 @@ table.target-table td{padding:0 16px}
 .tt-club{font-weight:600;font-size:.9rem}
 .tt-badge{display:inline-block;margin-left:7px;padding:1px 6px;border-radius:4px;font-size:.6rem;font-weight:800;text-transform:uppercase;letter-spacing:.05em;vertical-align:middle}
 .tt-badge.full{background:rgba(184,148,64,.3);color:#c9a84c;border:1px solid rgba(184,148,64,.45)}
-.tt-badge.flight{background:rgba(184,148,64,.15);color:#b89440;border:1px solid rgba(184,148,64,.3)}
+.tt-badge.flight{background:rgba(45,140,80,.25);color:#4caf72;border:1px solid rgba(45,140,80,.4)}
+.tt-badge.bomb{background:rgba(224,108,108,.2);color:#e06c6c;border:1px solid rgba(224,108,108,.45)}
 .tt-adj{font-weight:700;font-variant-numeric:tabular-nums}
 .tt-diff{text-align:right;font-variant-numeric:tabular-nums;font-size:.85rem}
 .tt-diff.over{color:#e06c6c}
@@ -136,22 +138,23 @@ table.target-table td{padding:0 16px}
 .btn-danger{background:var(--danger);color:#fff;border:none;border-radius:var(--r-md);padding:12px 16px;font-weight:700;font-size:.9rem;cursor:pointer;min-height:44px}
 
 /* ── Setup screen ── */
-#setup-screen{display:none;min-height:100vh;background:var(--bg);flex-direction:column;align-items:center;overflow-y:auto;padding:var(--safe-t) 16px var(--safe-b)}
+#setup-screen{display:none;height:100vh;background:var(--bg);flex-direction:column;align-items:center;overflow-y:auto;padding:var(--safe-t) 16px var(--safe-b)}
 #setup-screen.active{display:flex}
-.setup-inner{width:100%;max-width:480px;padding:40px 0;display:flex;flex-direction:column;gap:28px}
+.setup-inner{width:100%;max-width:480px;flex:1;padding:16px 0;display:flex;flex-direction:column;gap:14px}
+.setup-cta{}
 .setup-header{text-align:center}
 .setup-logo{font-size:3rem;margin-bottom:12px}
 .setup-title{font-size:2rem;font-weight:800;letter-spacing:-.03em;margin-bottom:8px}
 .setup-subtitle{font-size:.95rem;color:var(--muted);line-height:1.5}
-.setup-form{background:var(--surface);border-radius:var(--r-lg);padding:20px;display:flex;flex-direction:column;gap:20px;border:1px solid var(--border)}
-.anchor-group{display:flex;flex-direction:column;gap:6px}
-.anchor-label{font-size:.8rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
-.anchor-row{display:flex;align-items:center;gap:8px}
-.anchor-input{flex:1;background:var(--bg);border:2px solid var(--border);border-radius:var(--r-md);color:var(--text);font-size:1.8rem;font-weight:700;padding:10px 14px;text-align:right;font-variant-numeric:tabular-nums;outline:none;max-width:140px}
+.setup-form{background:var(--surface);border-radius:var(--r-lg);padding:14px 16px;display:flex;flex-direction:row;gap:12px;border:1px solid var(--border)}
+.anchor-group{display:flex;flex-direction:column;gap:4px;flex:1;align-items:center}
+.anchor-label{font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+.anchor-row{display:flex;align-items:center;gap:6px}
+.anchor-input{background:var(--bg);border:2px solid var(--border);border-radius:var(--r-md);color:var(--text);font-size:1.2rem;font-weight:700;padding:6px 8px;text-align:center;font-variant-numeric:tabular-nums;outline:none;width:72px}
 .anchor-input:focus{border-color:var(--accent)}
 .anchor-input.error{border-color:var(--error)}
-.anchor-unit{font-size:1rem;color:var(--muted);font-weight:600}
-.anchor-error{color:var(--error);font-size:.78rem;min-height:1.2em}
+.anchor-unit{font-size:.9rem;color:var(--muted);font-weight:600}
+.anchor-error{color:var(--error);font-size:.75rem;min-height:1em;text-align:center}
 .setup-cta{width:100%;padding:16px}
 .bag-preview{background:var(--surface);border-radius:var(--r-lg);padding:16px;border:1px solid var(--border)}
 .preview-title{font-size:.8rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:12px}
@@ -174,15 +177,14 @@ input[type=number]{-moz-appearance:textfield}
 <div id="setup-screen">
   <div class="setup-inner">
     <div class="setup-header">
-      <div class="setup-logo">⛳</div>
-      <h1 class="setup-title">Club Caddy</h1>
+<h1 class="setup-title">Club Caddy</h1>
       <p class="setup-subtitle">Enter your two anchor clubs and we'll build your full bag.</p>
     </div>
     <div class="setup-form">
       <div class="anchor-group">
         <label class="anchor-label">Driver carry</label>
         <div class="anchor-row">
-          <input class="anchor-input" id="input-driver" type="number" inputmode="numeric" placeholder="215" min="1" max="999"/>
+          <input class="anchor-input" id="input-driver" type="number" inputmode="numeric" value="215" min="1" max="999"/>
           <span class="anchor-unit">yds</span>
         </div>
         <p class="anchor-error" id="err-driver"></p>
@@ -190,7 +192,7 @@ input[type=number]{-moz-appearance:textfield}
       <div class="anchor-group">
         <label class="anchor-label">5 Iron carry</label>
         <div class="anchor-row">
-          <input class="anchor-input" id="input-5i" type="number" inputmode="numeric" placeholder="160" min="1" max="999"/>
+          <input class="anchor-input" id="input-5i" type="number" inputmode="numeric" value="160" min="1" max="999"/>
           <span class="anchor-unit">yds</span>
         </div>
         <p class="anchor-error" id="err-5i"></p>
@@ -525,12 +527,20 @@ function renderTarget() {
   const fullIdx   = rows.indexOf(fullRow);
   const flightRow = rows.slice(0, fullIdx).reverse().find(r => r.diff > fullRow.diff) ?? null;
 
+  // "Bomb" = closest club just below target (largest diff that's still negative, excluding fullRow if it's under)
+  const underRows = rows.filter(r => r.diff < 0);
+  const bombRow   = underRows.length
+    ? underRows.reduce((a, b) => a.diff >= b.diff ? a : b)
+    : null;
+
   document.getElementById('target-body').innerHTML = rows.map(r => {
     const isFull   = r === fullRow;
     const isFlight = r === flightRow;
-    const trCls    = (isFull || isFlight) ? 'target-pick' : '';
+    const isBomb   = r === bombRow;
+    const trCls    = (isFull || isFlight || isBomb) ? 'target-pick' : '';
     const badge    = isFull   ? '<span class="tt-badge full">Full</span>'
                    : isFlight ? '<span class="tt-badge flight">Flight</span>'
+                   : isBomb   ? '<span class="tt-badge bomb">Bomb</span>'
                    : '';
     return `<tr class="${trCls}">
       <td class="tt-club">${r.label}${badge}</td>
@@ -687,27 +697,21 @@ function showApp() {
 function showSetup() {
   document.getElementById('app').style.display = 'none';
   document.getElementById('setup-screen').classList.add('active');
-  inputDriver.value = '';
-  input5i.value = '';
+  inputDriver.value = '215';
+  input5i.value = '160';
   validateSetup();
 }
 
 
 // ── Boot ──────────────────────────────────────────────────────────────
+loadState();
 initSetupListeners();
 state.isSetupComplete ? showApp() : showSetup();
 
 // ── Service worker (PWA) ──────────────────────────────────────────────
 if ('serviceWorker' in navigator) {
-  const sw = `const C='club-caddy-v3';self.addEventListener('install',e=>{e.waitUntil(caches.open(C).then(c=>c.add('/')));self.skipWaiting()});self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(k=>Promise.all(k.filter(n=>n!==C).map(n=>caches.delete(n)))));self.clients.claim()});self.addEventListener('fetch',e=>{e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request)))})`;
-  const url = URL.createObjectURL(new Blob([sw], {type:'application/javascript'}));
-  navigator.serviceWorker.register(url).catch(()=>{});
+  navigator.serviceWorker.register('/sw.js').catch(() => {});
 }
-const mf = {name:'Club Caddy',short_name:'Club Caddy',start_url:'.',display:'standalone',orientation:'portrait',background_color:'#0f2318',theme_color:'#1a3a2a',icons:[]};
-const ml = document.createElement('link');
-ml.rel = 'manifest';
-ml.href = URL.createObjectURL(new Blob([JSON.stringify(mf)],{type:'application/manifest+json'}));
-document.head.appendChild(ml);
 </script>
 </body>
 </html>
