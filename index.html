@@ -99,27 +99,27 @@ table.wedge-table tr.wt-roll-row td{padding-top:0;padding-bottom:8px}
 
 /* ── Bump & Run ── */
 .target-input-row{display:flex;align-items:center;justify-content:center;gap:16px;padding:10px 16px;border-bottom:1px solid var(--border);background:var(--surface)}
-.target-yardage{font-size:2rem;font-weight:800;color:var(--accent);font-variant-numeric:tabular-nums;min-width:60px;width:72px;text-align:center;background:none;border:none;outline:none;-moz-appearance:textfield}
+.target-yardage{font-size:2rem;font-weight:800;color:var(--accent);font-variant-numeric:tabular-nums;min-width:60px;width:84px;text-align:center;background:var(--bg);border:2px solid var(--border);border-radius:var(--r-md);padding:4px 8px;outline:none;-moz-appearance:textfield;transition:border-color .15s}
+.target-yardage:focus{border-color:var(--accent)}
 .target-yardage::-webkit-outer-spin-button,.target-yardage::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
 .target-unit{font-size:.85rem;font-weight:600;color:var(--muted);align-self:flex-end;padding-bottom:6px}
-.target-wrap{flex:1;display:flex;flex-direction:column;overflow:hidden}
-table.target-table{width:100%;border-collapse:collapse;font-size:.95rem;flex:1}
-table.target-table thead th{padding:5px 16px;text-align:left;font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);border-bottom:1px solid var(--border);background:var(--surface)}
-table.target-table thead th:nth-child(3),table.target-table thead th:last-child{text-align:right}
-table.target-table tbody{display:table-row-group;height:100%}
-table.target-table tbody tr{border-bottom:1px solid rgba(45,99,72,.4);height:calc((100% - 1px) / 11)}
-table.target-table tbody tr.target-pick{background:rgba(184,148,64,.13)}
-table.target-table td{padding:0 16px}
-.tt-club{font-weight:600;font-size:.9rem}
-.tt-badge{display:inline-block;margin-left:7px;padding:1px 6px;border-radius:4px;font-size:.6rem;font-weight:800;text-transform:uppercase;letter-spacing:.05em;vertical-align:middle}
+.target-wrap{flex:1;padding:16px;display:flex;flex-direction:column;gap:12px}
+.target-card{flex:1;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);padding:16px 18px;display:flex;align-items:center;justify-content:space-between}
+.target-card.full{border-color:rgba(184,148,64,.6);background:rgba(184,148,64,.08)}
+.target-card.flight{border-color:rgba(45,140,80,.5);background:rgba(45,140,80,.06)}
+.target-card.bomb{border-color:rgba(224,108,108,.5);background:rgba(224,108,108,.06)}
+.tc-left{display:flex;flex-direction:column;gap:5px}
+.tc-club{font-weight:700;font-size:1.05rem}
+.tt-badge{display:inline-block;margin-top:3px;padding:2px 7px;border-radius:4px;font-size:.6rem;font-weight:800;text-transform:uppercase;letter-spacing:.05em}
 .tt-badge.full{background:rgba(184,148,64,.3);color:#c9a84c;border:1px solid rgba(184,148,64,.45)}
 .tt-badge.flight{background:rgba(45,140,80,.25);color:#4caf72;border:1px solid rgba(45,140,80,.4)}
 .tt-badge.bomb{background:rgba(224,108,108,.2);color:#e06c6c;border:1px solid rgba(224,108,108,.45)}
-.tt-adj{font-weight:700;font-variant-numeric:tabular-nums;text-align:left}
-.tt-roll{text-align:right;font-variant-numeric:tabular-nums;font-size:.82rem;color:var(--muted)}
-.tt-diff{text-align:right;font-variant-numeric:tabular-nums;font-size:.85rem}
-.tt-diff.over{color:#e06c6c}
-.tt-diff.under{color:var(--muted)}
+.tc-right{display:flex;flex-direction:column;align-items:flex-end;gap:3px}
+.tc-adj{font-size:1.5rem;font-weight:800;color:var(--accent);font-variant-numeric:tabular-nums}
+.tc-roll{font-size:.75rem;color:var(--muted);font-variant-numeric:tabular-nums}
+.tc-diff{font-size:.85rem;font-variant-numeric:tabular-nums}
+.tc-diff.over{color:#e06c6c}
+.tc-diff.under{color:var(--muted)}
 
 /* ── Modal ── */
 #modal-scrim{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);align-items:flex-end;z-index:200}
@@ -303,16 +303,7 @@ input[type=number]{-moz-appearance:textfield}
         <span class="target-unit">yds</span>
         <button class="stepper-btn" id="target-plus">+</button>
       </div>
-      <div class="target-wrap">
-        <table class="target-table">
-          <thead><tr>
-            <th>Club</th>
-            <th>Adjusted</th>
-            <th>Roll</th>
-            <th>Diff</th>
-          </tr></thead>
-          <tbody id="target-body"></tbody>
-        </table>
+      <div class="target-wrap" id="target-body">
       </div>
     </div>
 
@@ -524,53 +515,108 @@ function renderWedge() {
   }).join('');
 }
 
+const SWING_LABELS = ['Full', '¾', '½'];
+
+function wedgeCarry(id, swingIdx) {
+  const base = state.carries[id] ?? SPEC[id];
+  const windDev = WIND_MOD[state.wind] - 1.0;
+  const flatMod = AIR_MOD[state.air] * ELEV_MOD[state.elev] * LIE_MOD[state.lie];
+  const s = SWING_MULT[swingIdx];
+  return Math.round(base * s * flatMod * (1.0 + windDev * s));
+}
+
 function renderTarget() {
   const t = state.targetYds;
   const input = document.getElementById('target-display');
   if (input && document.activeElement !== input) input.value = t;
-  const rows = CLUBS.map(({ id, label }) => {
-    const base  = state.carries[id] ?? SPEC[id];
-    const adj   = adjustedCarry(base);
-    const roll  = Math.round(adj * 0.08);
-    const total = adj + roll;
-    const diff  = total - t;
-    const sign  = diff > 0 ? '+' : '';
-    const cls   = diff > 0 ? 'over' : 'under';
-    return { label, adj, roll, total, diff, sign, cls, absDiff: Math.abs(diff) };
-  });
 
-  // "Full" = closest club whose total is at or above target
-  const overRows  = rows.filter(r => r.diff >= 0);
-  const fullRow   = overRows.length
-    ? overRows.reduce((a, b) => a.diff <= b.diff ? a : b)
-    : rows.reduce((a, b) => a.absDiff <= b.absDiff ? a : b);
+  // Determine if target is in wedge range (at or below full adjusted PW carry)
+  const pwFullCarry = wedgeCarry('pw', 0);
+  const isWedgeRange = t <= pwFullCarry;
 
-  // "Flight" = next longer club above fullRow
-  const fullIdx   = rows.indexOf(fullRow);
-  const flightRow = rows.slice(0, fullIdx).reverse().find(r => r.diff > fullRow.diff) ?? null;
+  let picks;
 
-  // "Bomb" = closest club just below target
-  const underRows = rows.filter(r => r.diff < 0);
-  const bombRow   = underRows.length
-    ? underRows.reduce((a, b) => a.diff >= b.diff ? a : b)
-    : null;
+  if (isWedgeRange) {
+    // Build every wedge × swing combination
+    const candidates = [];
+    WEDGE_CLUBS.forEach(id => {
+      const label = CLUBS.find(c => c.id === id).label;
+      SWING_MULT.forEach((_, si) => {
+        const adj  = wedgeCarry(id, si);
+        const roll = Math.round(adj * 0.08);
+        const total = adj + roll;
+        const diff  = total - t;
+        candidates.push({ label, swingLabel: SWING_LABELS[si], adj, roll, total, diff, absDiff: Math.abs(diff), id, si });
+      });
+    });
 
-  document.getElementById('target-body').innerHTML = rows.map(r => {
-    const isFull   = r === fullRow;
-    const isFlight = r === flightRow;
-    const isBomb   = r === bombRow;
-    const trCls    = (isFull || isFlight || isBomb) ? 'target-pick' : '';
-    const badge    = isFull   ? '<span class="tt-badge full">Full</span>'
-                   : isFlight ? '<span class="tt-badge flight">Flight</span>'
-                   : isBomb   ? '<span class="tt-badge bomb">Bomb</span>'
-                   : '';
-    return `<tr class="${trCls}">
-      <td class="tt-club">${r.label}${badge}</td>
-      <td class="tt-adj">${r.adj} yds</td>
-      <td class="tt-roll">+${r.roll}</td>
-      <td class="tt-diff ${r.cls}">${r.sign}${r.diff}</td>
-    </tr>`;
-  }).join('');
+    // "Full" = closest carry+roll at or above target
+    const over  = candidates.filter(c => c.diff >= 0);
+    const full  = over.length
+      ? over.reduce((a, b) => a.diff <= b.diff ? a : b)
+      : candidates.reduce((a, b) => a.absDiff <= b.absDiff ? a : b);
+
+    // "Flight" = next candidate above full (larger diff, not same club+swing)
+    const above = candidates.filter(c => c.diff > full.diff);
+    const flight = above.length ? above.reduce((a, b) => a.diff <= b.diff ? a : b) : null;
+
+    // "Bomb" = closest candidate just below target
+    const under = candidates.filter(c => c.diff < 0);
+    const bomb  = under.length ? under.reduce((a, b) => a.diff >= b.diff ? a : b) : null;
+
+    picks = [
+      flight && { r: flight, type: 'flight', badgeLabel: 'Flight', swingLabel: flight.swingLabel },
+      { r: full, type: 'full', badgeLabel: 'Full', swingLabel: full.swingLabel },
+      bomb && bomb !== full && { r: bomb, type: 'bomb', badgeLabel: 'Bomb', swingLabel: bomb.swingLabel },
+    ].filter(Boolean);
+  } else {
+    // Standard full-swing mode for longer clubs
+    const rows = CLUBS.map(({ id, label }) => {
+      const base  = state.carries[id] ?? SPEC[id];
+      const adj   = adjustedCarry(base);
+      const roll  = Math.round(adj * 0.08);
+      const total = adj + roll;
+      const diff  = total - t;
+      const sign  = diff > 0 ? '+' : '';
+      const cls   = diff > 0 ? 'over' : 'under';
+      return { label, adj, roll, total, diff, sign, cls, absDiff: Math.abs(diff) };
+    });
+
+    const overRows  = rows.filter(r => r.diff >= 0);
+    const fullRow   = overRows.length
+      ? overRows.reduce((a, b) => a.diff <= b.diff ? a : b)
+      : rows.reduce((a, b) => a.absDiff <= b.absDiff ? a : b);
+
+    const fullIdx   = rows.indexOf(fullRow);
+    const flightRow = rows.slice(0, fullIdx).reverse().find(r => r.diff > fullRow.diff) ?? null;
+
+    const underRows = rows.filter(r => r.diff < 0);
+    const bombRow   = underRows.length
+      ? underRows.reduce((a, b) => a.diff >= b.diff ? a : b)
+      : null;
+
+    picks = [
+      flightRow && { r: flightRow, type: 'flight', badgeLabel: 'Flight', swingLabel: null },
+      { r: fullRow, type: 'full', badgeLabel: 'Full', swingLabel: null },
+      bombRow && bombRow !== fullRow && { r: bombRow, type: 'bomb', badgeLabel: 'Bomb', swingLabel: null },
+    ].filter(Boolean);
+  }
+
+  const sign  = r => r.diff > 0 ? '+' : '';
+  const cls   = r => r.diff > 0 ? 'over' : 'under';
+
+  document.getElementById('target-body').innerHTML = picks.map(({ r, type, badgeLabel, swingLabel }) => `
+    <div class="target-card ${type}">
+      <div class="tc-left">
+        <span class="tc-club">${swingLabel ? `${swingLabel} ${r.label}` : r.label}</span>
+        <span class="tt-badge ${type}">${badgeLabel}</span>
+      </div>
+      <div class="tc-right">
+        <span class="tc-adj">${r.adj} yds</span>
+        <span class="tc-roll">+${r.roll} roll</span>
+        <span class="tc-diff ${cls(r)}">${sign(r)}${r.diff} vs target</span>
+      </div>
+    </div>`).join('');
 }
 
 function initTargetCtrl() {
