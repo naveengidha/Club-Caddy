@@ -171,6 +171,9 @@ table.preview-table tr.dim td{color:var(--muted)}
 
 @keyframes fade-in{from{opacity:0}to{opacity:1}}
 @keyframes slide-up{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.anchor-input--sm{width:60px}
+.anchor-hint{color:var(--muted);font-size:.7rem;min-height:1em;text-align:center;opacity:.75}
+.setup-form--conditions{opacity:.9}
 input[type=number]::-webkit-inner-spin-button,input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none}
 input[type=number]{-moz-appearance:textfield}
 
@@ -201,6 +204,26 @@ input[type=number]{-moz-appearance:textfield}
           <span class="anchor-unit">yds</span>
         </div>
         <p class="anchor-error" id="err-5i"></p>
+      </div>
+    </div>
+    <div class="setup-form setup-form--conditions">
+      <div class="anchor-group">
+        <label class="anchor-label" for="input-temp">Temp (optional)</label>
+        <div class="anchor-row">
+          <input class="anchor-input anchor-input--sm" id="input-temp"
+                 type="number" inputmode="decimal" placeholder="20" min="-30" max="60"/>
+          <span class="anchor-unit">°C</span>
+        </div>
+        <p class="anchor-hint">Air temp when measured</p>
+      </div>
+      <div class="anchor-group">
+        <label class="anchor-label" for="input-alt">Altitude (optional)</label>
+        <div class="anchor-row">
+          <input class="anchor-input anchor-input--sm" id="input-alt"
+                 type="number" inputmode="numeric" placeholder="0" min="0" max="4000"/>
+          <span class="anchor-unit">m</span>
+        </div>
+        <p class="anchor-hint">Metres above sea level</p>
       </div>
     </div>
     <div class="bag-preview">
@@ -391,6 +414,8 @@ const state = {
   elev: 'level',
   lie: 'clean',
   targetYds: 150,
+  observedTempC: 20,
+  observedAltM: 0,
 };
 
 function loadState() {
@@ -401,8 +426,23 @@ function loadState() {
 }
 
 function saveState() {
-  const { isSetupComplete, anchors, carries, locked, air, wind, elev, lie, targetYds } = state;
-  localStorage.setItem('club-caddy-v3', JSON.stringify({ isSetupComplete, anchors, carries, locked, air, wind, elev, lie, targetYds }));
+  const { isSetupComplete, anchors, carries, locked, air, wind, elev, lie, targetYds, observedTempC, observedAltM } = state;
+  localStorage.setItem('club-caddy-v3', JSON.stringify({ isSetupComplete, anchors, carries, locked, air, wind, elev, lie, targetYds, observedTempC, observedAltM }));
+}
+
+// ── Normalization (setup-time) ────────────────────────────────────────
+const STD_TEMP_C = 20;
+const STD_ALT_M  = 0;
+
+function normalizationFactor(tempC, altM) {
+  const tc = Math.max(-30, Math.min(60, tempC));
+  const alt = Math.max(0, Math.min(4000, altM));
+  // Temperature: carry ∝ sqrt(T), so factor = sqrt(T_obs / T_std)
+  const tempFactor = Math.sqrt((tc + 273.15) / (STD_TEMP_C + 273.15));
+  // Altitude: pressure drops ~1.2% per 100m, carry ∝ 1/sqrt(P), so factor = 1/sqrt(P_obs/P_std)
+  // P_obs/P_std ≈ exp(-alt / 8500) using standard atmosphere scale height
+  const altFactor = 1 / Math.sqrt(Math.exp(-alt / 8500));
+  return Math.max(0.85, Math.min(1.30, tempFactor * altFactor));
 }
 
 // ── Math ─────────────────────────────────────────────────────────────
@@ -436,6 +476,8 @@ function extrapolate(driverCarry, fiveIronCarry) {
 // ── Setup ─────────────────────────────────────────────────────────────
 const inputDriver = document.getElementById('input-driver');
 const input5i     = document.getElementById('input-5i');
+const inputTemp   = document.getElementById('input-temp');
+const inputAlt    = document.getElementById('input-alt');
 const errDriver   = document.getElementById('err-driver');
 const err5i       = document.getElementById('err-5i');
 const btnStart    = document.getElementById('btn-start');
@@ -455,21 +497,45 @@ function validateSetup() {
     : (fOk && dOk && d <= f) ? 'Must be less than Driver' : '';
   btnStart.disabled = !crossOk;
 
-  const preview = (dOk && fOk) ? extrapolate(d, f) : null;
-  previewBody.innerHTML = CLUBS.map(({ id, label }) =>
-    `<tr class="${crossOk ? '' : 'dim'}"><td>${label}</td><td class="num">${crossOk ? preview[id] + ' yds' : '—'}</td></tr>`
-  ).join('');
+  if (dOk && fOk) {
+    const tc    = parseFloat(inputTemp.value);
+    const ac    = parseFloat(inputAlt.value);
+    const tempC = isNaN(tc) ? STD_TEMP_C : tc;
+    const altM  = isNaN(ac) ? STD_ALT_M  : ac;
+    const nf    = normalizationFactor(tempC, altM);
+    const dNorm = Math.round(d * nf);
+    const fNorm = Math.round(f * nf);
+    const preview = extrapolate(dNorm, fNorm);
+    previewBody.innerHTML = CLUBS.map(({ id, label }) =>
+      `<tr class="${crossOk ? '' : 'dim'}"><td>${label}</td><td class="num">${crossOk ? preview[id] + ' yds' : '—'}</td></tr>`
+    ).join('');
+  } else {
+    previewBody.innerHTML = CLUBS.map(({ id, label }) =>
+      `<tr class="dim"><td>${label}</td><td class="num">—</td></tr>`
+    ).join('');
+  }
 }
 
 function initSetupListeners() {
   inputDriver.addEventListener('input', validateSetup);
   input5i.addEventListener('input', validateSetup);
+  inputTemp.addEventListener('input', validateSetup);
+  inputAlt.addEventListener('input', validateSetup);
   validateSetup();
   btnStart.addEventListener('click', () => {
     const d = parseInt(inputDriver.value, 10);
     const f = parseInt(input5i.value, 10);
-    state.anchors = { driver: d, fiveIron: f };
-    state.carries = extrapolate(d, f);
+    const tc    = parseFloat(inputTemp.value);
+    const ac    = parseFloat(inputAlt.value);
+    const tempC = isNaN(tc) ? STD_TEMP_C : tc;
+    const altM  = isNaN(ac) ? STD_ALT_M  : ac;
+    const nf    = normalizationFactor(tempC, altM);
+    const dNorm = Math.round(d * nf);
+    const fNorm = Math.round(f * nf);
+    state.anchors         = { driver: d, fiveIron: f };
+    state.observedTempC   = tempC;
+    state.observedAltM    = altM;
+    state.carries         = extrapolate(dNorm, fNorm);
     state.isSetupComplete = true;
     saveState();
     showApp();
@@ -695,7 +761,10 @@ function openClubModal(id) {
     <button class="btn-primary" id="modal-save">Save</button>`;
   document.getElementById('modal-reset').addEventListener('click', () => {
     delete state.locked[modalClubId];
-    state.carries = extrapolate(state.anchors.driver, state.anchors.fiveIron);
+    const nf    = normalizationFactor(state.observedTempC, state.observedAltM);
+    const dNorm = Math.round(state.anchors.driver * nf);
+    const fNorm = Math.round(state.anchors.fiveIron * nf);
+    state.carries = extrapolate(dNorm, fNorm);
     saveState(); renderAll(); closeModal();
   });
   document.getElementById('modal-save').addEventListener('click', () => {
@@ -735,7 +804,7 @@ document.getElementById('btn-settings').addEventListener('click', () => {
     closeModal();
   });
   document.getElementById('modal-confirm-reset').addEventListener('click', () => {
-    Object.assign(state, { isSetupComplete:false, anchors:null, carries:{}, locked:{} });
+    Object.assign(state, { isSetupComplete:false, anchors:null, carries:{}, locked:{}, observedTempC:STD_TEMP_C, observedAltM:STD_ALT_M });
     document.getElementById('modal-stepper-row').style.display = '';
     saveState(); closeModal(); showSetup();
   });
@@ -766,8 +835,10 @@ function showApp() {
 function showSetup() {
   document.getElementById('app').style.display = 'none';
   document.getElementById('setup-screen').classList.add('active');
-  inputDriver.value = '210';
-  input5i.value = '160';
+  inputDriver.value = state.anchors?.driver   ?? '210';
+  input5i.value     = state.anchors?.fiveIron ?? '160';
+  inputTemp.value   = (state.observedTempC === STD_TEMP_C) ? '' : state.observedTempC;
+  inputAlt.value    = (state.observedAltM  === STD_ALT_M)  ? '' : state.observedAltM;
   validateSetup();
 }
 
